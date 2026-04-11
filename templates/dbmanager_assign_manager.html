@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Assign Manager{% endblock %}
+{% block content %}
+<h1>Assign Manager to Club</h1>
+
+<div class="card">
+  <h2 style="margin-top:0">Current Assignments</h2>
+  <table>
+    <thead>
+      <tr><th>Club</th><th>Current Manager</th></tr>
+    </thead>
+    <tbody>
+      {% for c in clubs %}
+      <tr>
+        <td>{{ c.club_name }}</td>
+        <td>{{ c.current_manager_name or 'Unassigned' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="card">
+  <h2 style="margin-top:0">Make Assignment</h2>
+  <form method="POST">
+    <div class="form-group">
+      <label for="manager_id">Manager</label>
+      <select id="manager_id" name="manager_id" required>
+        <option value="">-- Select Manager --</option>
+        {% for m in managers %}
+        <option value="{{ m.person_id }}">
+          {{ m.name }} {{ m.surname }}
+          {% if m.current_club %}(currently: {{ m.current_club }}){% endif %}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="club_id">Club</label>
+      <select id="club_id" name="club_id" required>
+        <option value="">-- Select Club --</option>
+        {% for c in clubs %}
+        <option value="{{ c.club_id }}">{{ c.club_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit">Assign Manager</button>
+  </form>
+</div>
+{% endblock %}

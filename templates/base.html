@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TransferDB – {% block title %}{% endblock %}</title>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:Arial,sans-serif;margin:0;padding:0;background:#f5f5f5}
+    nav{background:#1a1a2e;padding:10px 20px;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+    nav a{color:#e0e0e0;text-decoration:none;padding:4px 10px;border-radius:4px;font-size:14px}
+    nav a:hover{background:#16213e;color:#fff}
+    .nav-right{margin-left:auto;color:#aaa;font-size:13px}
+    .nav-right a{color:#e0e0e0}
+    .container{max-width:1100px;margin:20px auto;padding:0 20px}
+    h1,h2,h3{color:#1a1a2e}
+    .flash-error{background:#ffe0e0;color:#c00;padding:10px 16px;border-left:4px solid #c00;margin:10px 0;border-radius:2px}
+    .flash-success{background:#e0ffe0;color:#070;padding:10px 16px;border-left:4px solid #070;margin:10px 0;border-radius:2px}
+    table{border-collapse:collapse;width:100%;background:#fff;margin:10px 0}
+    th,td{border:1px solid #ddd;padding:8px 12px;text-align:left;font-size:14px}
+    th{background:#1a1a2e;color:#fff}
+    tr:nth-child(even){background:#f9f9f9}
+    input[type=text],input[type=password],input[type=number],input[type=date],
+    input[type=datetime-local],select,input[type=email]{
+      padding:7px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;width:100%;margin:4px 0}
+    .form-group{margin:10px 0}
+    .form-group label{display:block;font-size:14px;font-weight:bold;margin-bottom:2px}
+    button,.btn{background:#1a1a2e;color:#fff;padding:8px 18px;border:none;border-radius:4px;
+                cursor:pointer;font-size:14px;text-decoration:none;display:inline-block}
+    button:hover,.btn:hover{background:#16213e}
+    .btn-sm{padding:4px 10px;font-size:13px}
+    .btn-secondary{background:#555}
+    .card{background:#fff;border:1px solid #ddd;border-radius:6px;padding:20px;margin:10px 0}
+    .profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .profile-item{padding:6px 0;border-bottom:1px solid #eee}
+    .profile-label{font-weight:bold;color:#555;font-size:13px}
+    .profile-value{font-size:15px;color:#222}
+    select[multiple]{height:auto}
+    .filter-form{background:#fff;padding:16px;border:1px solid #ddd;border-radius:6px;margin:10px 0;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+    .filter-form .form-group{margin:0;min-width:160px}
+    .win{color:green;font-weight:bold}
+    .loss{color:red}
+    .draw{color:#888}
+  </style>
+</head>
+<body>
+{% if session.username %}
+<nav>
+  <a href="{{ url_for('dashboard') }}"><strong>TransferDB</strong></a>
+  {% if session.role == 'player' %}
+    <a href="{{ url_for('player_profile') }}">Profile</a>
+    <a href="{{ url_for('player_stats') }}">My Stats</a>
+    <a href="{{ url_for('player_matches') }}">Match History</a>
+    <a href="{{ url_for('player_career') }}">Career History</a>
+  {% elif session.role == 'manager' %}
+    <a href="{{ url_for('manager_profile') }}">Profile</a>
+    <a href="{{ url_for('manager_fixtures') }}">Fixtures</a>
+    <a href="{{ url_for('manager_standings') }}">Standings</a>
+    <a href="{{ url_for('manager_squad_stats') }}">Squad Stats</a>
+    <a href="{{ url_for('manager_leaderboard') }}">Leaderboard</a>
+  {% elif session.role == 'referee' %}
+    <a href="{{ url_for('referee_profile') }}">Profile</a>
+    <a href="{{ url_for('referee_stats') }}">My Stats</a>
+    <a href="{{ url_for('referee_history') }}">Match History</a>
+    <a href="{{ url_for('referee_matches') }}">Submit Results</a>
+  {% elif session.role == 'db_manager' %}
+    <a href="{{ url_for('dbmanager_dashboard') }}">Dashboard</a>
+    <a href="{{ url_for('dbmanager_stadiums') }}">Stadiums</a>
+    <a href="{{ url_for('dbmanager_schedule_match') }}">Schedule Match</a>
+    <a href="{{ url_for('dbmanager_transfer') }}">Transfer</a>
+    <a href="{{ url_for('dbmanager_assign_manager') }}">Assign Manager</a>
+    <a href="{{ url_for('dbmanager_create_competition') }}">New Competition</a>
+    <a href="{{ url_for('dbmanager_create_user') }}">Create User</a>
+  {% endif %}
+  <span class="nav-right">
+    {{ session.username }}
+    ({{ session.role.replace('_',' ').title() }})
+    &nbsp;|&nbsp;
+    <a href="{{ url_for('logout') }}">Logout</a>
+  </span>
+</nav>
+{% endif %}
+
+<div class="container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="flash-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  {% block content %}{% endblock %}
+</div>
+</body>
+</html>

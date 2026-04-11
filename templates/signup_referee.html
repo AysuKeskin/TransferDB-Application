@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Sign Up – Referee{% endblock %}
+{% block content %}
+<div style="max-width:520px;margin:40px auto">
+  <div class="card">
+    <h1 style="margin-top:0">Referee Registration</h1>
+    <form method="POST" action="{{ url_for('signup_referee') }}">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" name="username" value="{{ form.get('username','') }}" required>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" required>
+        <small style="color:#777">Min 8 chars, uppercase, lowercase, digit, special char</small>
+      </div>
+      <hr>
+      <div class="form-group">
+        <label>First Name</label>
+        <input type="text" name="name" value="{{ form.get('name','') }}" required>
+      </div>
+      <div class="form-group">
+        <label>Surname</label>
+        <input type="text" name="surname" value="{{ form.get('surname','') }}" required>
+      </div>
+      <div class="form-group">
+        <label>Nationality</label>
+        <input type="text" name="nationality" value="{{ form.get('nationality','') }}" required>
+      </div>
+      <div class="form-group">
+        <label>Date of Birth (YYYY-MM-DD)</label>
+        <input type="date" name="date_of_birth" value="{{ form.get('date_of_birth','') }}" required>
+      </div>
+      <div class="form-group">
+        <label>License Level</label>
+        <input type="text" name="license_level"
+               placeholder="e.g. FIFA / National"
+               value="{{ form.get('license_level','') }}" required>
+      </div>
+      <div class="form-group">
+        <label>Years of Experience</label>
+        <input type="number" name="years_of_experience" min="0"
+               value="{{ form.get('years_of_experience','') }}" required>
+      </div>
+      <button type="submit" style="width:100%;margin-top:12px">Register as Referee</button>
+    </form>
+    <p style="text-align:center;font-size:13px;margin-top:10px">
+      <a href="{{ url_for('signup') }}">&larr; Back to role selection</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

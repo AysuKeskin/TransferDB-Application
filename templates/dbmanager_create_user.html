@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}Create User{% endblock %}
+{% block content %}
+<h1>Create New User</h1>
+<div class="card">
+  <form method="POST">
+    <div class="form-group">
+      <label for="role">Role</label>
+      <select id="role" name="role" required onchange="toggleRoleFields(this.value)">
+        <option value="player" {{ 'selected' if form.get('role')=='player' }}>Player</option>
+        <option value="manager" {{ 'selected' if form.get('role')=='manager' }}>Manager</option>
+        <option value="referee" {{ 'selected' if form.get('role')=='referee' }}>Referee</option>
+      </select>
+    </div>
+
+    <h3>Account</h3>
+    <div class="form-group">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username"
+             value="{{ form.get('username','') }}" required>
+    </div>
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" required>
+      <small style="color:#777">Min 8 chars, uppercase, lowercase, digit, special char</small>
+    </div>
+
+    <h3>Personal Info</h3>
+    <div class="form-group">
+      <label for="name">First Name</label>
+      <input type="text" id="name" name="name"
+             value="{{ form.get('name','') }}" required>
+    </div>
+    <div class="form-group">
+      <label for="surname">Surname</label>
+      <input type="text" id="surname" name="surname"
+             value="{{ form.get('surname','') }}" required>
+    </div>
+    <div class="form-group">
+      <label for="nationality">Nationality</label>
+      <input type="text" id="nationality" name="nationality"
+             value="{{ form.get('nationality','') }}" required>
+    </div>
+    <div class="form-group">
+      <label for="date_of_birth">Date of Birth</label>
+      <input type="date" id="date_of_birth" name="date_of_birth"
+             value="{{ form.get('date_of_birth','') }}" required>
+    </div>
+
+    <!-- Player fields -->
+    <div id="player_fields">
+      <h3>Player Details</h3>
+      <div class="form-group">
+        <label for="market_value">Market Value</label>
+        <input type="number" id="market_value" name="market_value" step="0.01" min="0"
+               value="{{ form.get('market_value','') }}">
+      </div>
+      <div class="form-group">
+        <label for="main_position">Main Position</label>
+        <input type="text" id="main_position" name="main_position"
+               value="{{ form.get('main_position','') }}">
+      </div>
+      <div class="form-group">
+        <label for="strong_foot">Strong Foot</label>
+        <select id="strong_foot" name="strong_foot">
+          <option value="Right">Right</option>
+          <option value="Left">Left</option>
+          <option value="Both">Both</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="height">Height (cm)</label>
+        <input type="number" id="height" name="height" min="1"
+               value="{{ form.get('height','') }}">
+      </div>
+    </div>
+
+    <!-- Manager fields -->
+    <div id="manager_fields" style="display:none">
+      <h3>Manager Details</h3>
+      <div class="form-group">
+        <label for="preferred_formation">Preferred Formation</label>
+        <input type="text" id="preferred_formation" name="preferred_formation"
+               value="{{ form.get('preferred_formation','') }}"
+               placeholder="e.g. 4-3-3">
+      </div>
+      <div class="form-group">
+        <label for="experience_level">Experience Level</label>
+        <input type="text" id="experience_level" name="experience_level"
+               value="{{ form.get('experience_level','') }}">
+      </div>
+    </div>
+
+    <!-- Referee fields -->
+    <div id="referee_fields" style="display:none">
+      <h3>Referee Details</h3>
+      <div class="form-group">
+        <label for="license_level">License Level</label>
+        <input type="text" id="license_level" name="license_level"
+               value="{{ form.get('license_level','') }}">
+      </div>
+      <div class="form-group">
+        <label for="years_of_experience">Years of Experience</label>
+        <input type="number" id="years_of_experience" name="years_of_experience" min="0"
+               value="{{ form.get('years_of_experience','') }}">
+      </div>
+    </div>
+
+    <button type="submit" style="margin-top:16px">Create User</button>
+    <a href="{{ url_for('dbmanager_dashboard') }}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+
+<script>
+function toggleRoleFields(role) {
+  document.getElementById('player_fields').style.display = (role === 'player') ? '' : 'none';
+  document.getElementById('manager_fields').style.display = (role === 'manager') ? '' : 'none';
+  document.getElementById('referee_fields').style.display = (role === 'referee') ? '' : 'none';
+}
+toggleRoleFields(document.getElementById('role').value);
+</script>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Sign Up – DB Manager{% endblock %}
+{% block content %}
+<div style="max-width:420px;margin:60px auto">
+  <div class="card">
+    <h1 style="margin-top:0">Database Manager Registration</h1>
+    <form method="POST" action="{{ url_for('signup_dbmanager') }}">
+      <div class="form-group">
+        <label>Username</label>
+        <input type="text" name="username" value="{{ form.get('username','') }}" required autofocus>
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" required>
+        <small style="color:#777">Min 8 chars, uppercase, lowercase, digit, special char</small>
+      </div>
+      <button type="submit" style="width:100%;margin-top:12px">Create DB Manager Account</button>
+    </form>
+    <p style="text-align:center;font-size:13px;margin-top:10px">
+      <a href="{{ url_for('signup') }}">&larr; Back to role selection</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

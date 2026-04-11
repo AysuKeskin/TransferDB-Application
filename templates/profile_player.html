@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Player Profile{% endblock %}
+{% block content %}
+<h1>My Profile</h1>
+{% if player %}
+<div class="card">
+  <div class="profile-grid">
+    <div class="profile-item">
+      <div class="profile-label">Full Name</div>
+      <div class="profile-value">{{ player.name }} {{ player.surname }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Age</div>
+      <div class="profile-value">{{ player.age }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Nationality</div>
+      <div class="profile-value">{{ player.nationality }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Date of Birth</div>
+      <div class="profile-value">{{ player.date_of_birth }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Current Club</div>
+      <div class="profile-value">{{ current_club }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Main Position</div>
+      <div class="profile-value">{{ player.main_position }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Strong Foot</div>
+      <div class="profile-value">{{ player.strong_foot }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Height</div>
+      <div class="profile-value">{{ player.height }} cm</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Market Value</div>
+      <div class="profile-value">€{{ '{:,.2f}'.format(player.market_value) }}</div>
+    </div>
+  </div>
+</div>
+{% else %}
+<p>Profile data not found.</p>
+{% endif %}
+
+<div style="margin-top:20px;display:flex;gap:10px">
+  <a href="{{ url_for('player_stats') }}" class="btn">View My Stats</a>
+  <a href="{{ url_for('player_matches') }}" class="btn">Match History</a>
+  <a href="{{ url_for('player_career') }}" class="btn">Career History</a>
+</div>
+{% endblock %}

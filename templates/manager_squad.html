@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Submit Squad{% endblock %}
+{% block content %}
+<h1>Submit Squad</h1>
+
+<div class="card">
+  <strong>Match:</strong> {{ match.home_club }} vs {{ match.away_club }}<br>
+  <strong>Competition:</strong> {{ match.competition }} ({{ match.season }})<br>
+  <strong>Date:</strong> {{ match.match_datetime }}<br>
+  <strong>Your Club:</strong> {{ club.club_name }}
+</div>
+
+{% if players %}
+<form method="POST" action="{{ url_for('manager_squad', match_id=match.match_id) }}">
+  <p style="font-size:14px;color:#555">
+    Select between <strong>11 and 23</strong> players.
+    Mark up to <strong>11</strong> as starters.
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>Select</th>
+        <th>Name</th>
+        <th>Position</th>
+        <th>Starter</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in players %}
+      {% set already = p.person_id in existing_map %}
+      {% set is_starter_val = existing_map.get(p.person_id, False) %}
+      <tr>
+        <td>
+          <input type="checkbox" name="player_ids" value="{{ p.person_id }}"
+            id="p_{{ p.person_id }}"
+            {{ 'checked' if already }}
+            onchange="syncStarter(this)">
+        </td>
+        <td><label for="p_{{ p.person_id }}">{{ p.name }} {{ p.surname }}</label></td>
+        <td>{{ p.main_position }}</td>
+        <td>
+          <input type="checkbox" name="starter_ids" value="{{ p.person_id }}"
+            id="s_{{ p.person_id }}"
+            {{ 'checked' if already and is_starter_val }}
+            {{ 'disabled' if not already }}>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div style="margin-top:14px;display:flex;gap:10px">
+    <button type="submit">Save Squad</button>
+    <a href="{{ url_for('manager_fixtures') }}" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+
+<script>
+function syncStarter(checkbox) {
+  var pid = checkbox.value;
+  var starterBox = document.getElementById('s_' + pid);
+  if (starterBox) {
+    starterBox.disabled = !checkbox.checked;
+    if (!checkbox.checked) starterBox.checked = false;
+  }
+}
+// Initialize starter checkboxes on page load
+document.querySelectorAll('input[name="player_ids"]').forEach(function(cb) {
+  syncStarter(cb);
+});
+</script>
+
+{% else %}
+<div class="card">
+  <p>No eligible players found (players with active contracts on match date).</p>
+</div>
+{% endif %}
+
+<p><a href="{{ url_for('manager_fixtures') }}">&larr; Back to Fixtures</a></p>
+{% endblock %}

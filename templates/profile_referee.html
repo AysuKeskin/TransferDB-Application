@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+{% block title %}Referee Profile{% endblock %}
+{% block content %}
+<h1>My Profile</h1>
+{% if referee %}
+<div class="card">
+  <div class="profile-grid">
+    <div class="profile-item">
+      <div class="profile-label">Full Name</div>
+      <div class="profile-value">{{ referee.name }} {{ referee.surname }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Age</div>
+      <div class="profile-value">{{ referee.age }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Nationality</div>
+      <div class="profile-value">{{ referee.nationality }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Date of Birth</div>
+      <div class="profile-value">{{ referee.date_of_birth }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">License Level</div>
+      <div class="profile-value">{{ referee.license_level }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Years of Experience</div>
+      <div class="profile-value">{{ referee.years_of_experience }}</div>
+    </div>
+  </div>
+</div>
+{% else %}
+<p>Profile data not found.</p>
+{% endif %}
+
+<div style="margin-top:20px;display:flex;gap:10px">
+  <a href="{{ url_for('referee_stats') }}" class="btn">My Statistics</a>
+  <a href="{{ url_for('referee_history') }}" class="btn">Match History</a>
+  <a href="{{ url_for('referee_matches') }}" class="btn">Submit Match Results</a>
+</div>
+{% endblock %}

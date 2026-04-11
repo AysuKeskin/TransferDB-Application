@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Referee Statistics{% endblock %}
+{% block content %}
+<h1>My Officiating Statistics</h1>
+
+<div class="card">
+  <div class="profile-grid">
+    <div class="profile-item">
+      <div class="profile-label">Matches Officiated</div>
+      <div class="profile-value">{{ stats.matches_officiated or 0 }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Total Yellow Cards Issued</div>
+      <div class="profile-value">{{ stats.total_yellow or 0 }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Total Red Cards Issued</div>
+      <div class="profile-value">{{ stats.total_red or 0 }}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

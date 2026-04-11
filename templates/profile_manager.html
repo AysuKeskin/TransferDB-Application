@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Manager Profile{% endblock %}
+{% block content %}
+<h1>My Profile</h1>
+{% if manager %}
+<div class="card">
+  <div class="profile-grid">
+    <div class="profile-item">
+      <div class="profile-label">Full Name</div>
+      <div class="profile-value">{{ manager.name }} {{ manager.surname }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Age</div>
+      <div class="profile-value">{{ manager.age }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Nationality</div>
+      <div class="profile-value">{{ manager.nationality }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Date of Birth</div>
+      <div class="profile-value">{{ manager.date_of_birth }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Current Club</div>
+      <div class="profile-value">{{ club.club_name if club else 'Not assigned' }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Preferred Formation</div>
+      <div class="profile-value">{{ manager.preferred_formation }}</div>
+    </div>
+    <div class="profile-item">
+      <div class="profile-label">Experience Level</div>
+      <div class="profile-value">{{ manager.experience_level }}</div>
+    </div>
+  </div>
+</div>
+{% else %}
+<p>Profile data not found.</p>
+{% endif %}
+
+{% if not club %}
+<div class="flash-error">You are not currently assigned to any club. Contact a Database Manager.</div>
+{% else %}
+<div style="margin-top:20px;display:flex;gap:10px">
+  <a href="{{ url_for('manager_fixtures') }}" class="btn">Fixtures &amp; Results</a>
+  <a href="{{ url_for('manager_standings') }}" class="btn">League Standings</a>
+  <a href="{{ url_for('manager_squad_stats') }}" class="btn">Squad Statistics</a>
+  <a href="{{ url_for('manager_leaderboard') }}" class="btn">Leaderboard</a>
+</div>
+{% endif %}
+{% endblock %}

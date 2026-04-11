@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Stadiums{% endblock %}
+{% block content %}
+<h1>Stadiums</h1>
+
+{% if stadiums %}
+<table>
+  <thead>
+    <tr>
+      <th>Stadium Name</th>
+      <th>City</th>
+      <th>Capacity</th>
+      <th>Home Club(s)</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in stadiums %}
+    <tr>
+      <td>{{ s.stadium_name }}</td>
+      <td>{{ s.city }}</td>
+      <td>{{ '{:,}'.format(s.capacity) }}</td>
+      <td>{{ s.clubs or 'None' }}</td>
+      <td>
+        <a href="{{ url_for('dbmanager_rename_stadium', stadium_id=s.stadium_id) }}"
+           class="btn btn-sm">Rename</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="card"><p>No stadiums found.</p></div>
+{% endif %}
+{% endblock %}

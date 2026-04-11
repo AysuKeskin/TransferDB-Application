@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Matches to Submit{% endblock %}
+{% block content %}
+<h1>Matches Awaiting Result Submission</h1>
+<p style="color:#555;font-size:14px">
+  Showing your assigned matches that have already taken place and are not yet completed.
+</p>
+
+{% if matches %}
+<table>
+  <thead>
+    <tr>
+      <th>Date &amp; Time</th>
+      <th>Competition</th>
+      <th>Season</th>
+      <th>Home</th>
+      <th>Away</th>
+      <th>Stadium</th>
+      <th>Squad Size</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in matches %}
+    <tr>
+      <td>{{ m.match_datetime }}</td>
+      <td>{{ m.competition }}</td>
+      <td>{{ m.season }}</td>
+      <td>{{ m.home_club }}</td>
+      <td>{{ m.away_club }}</td>
+      <td>{{ m.stadium_name }}</td>
+      <td>{{ m.squad_count }} players registered</td>
+      <td>
+        <a href="{{ url_for('referee_submit', match_id=m.match_id) }}" class="btn btn-sm">
+          Submit Result
+        </a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="card">
+  <p>No matches awaiting result submission.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}My Statistics{% endblock %}
+{% block content %}
+<h1>Performance Statistics</h1>
+
+<form method="GET" action="{{ url_for('player_stats') }}" class="filter-form">
+  <div class="form-group">
+    <label>Season</label>
+    <select name="season" onchange="this.form.submit()">
+      <option value="">All Seasons (Career)</option>
+      {% for s in seasons %}
+        <option value="{{ s.season }}" {{ 'selected' if season == s.season }}>{{ s.season }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% if season and competitions %}
+  <div class="form-group">
+    <label>Competition</label>
+    <select name="competition_id" onchange="this.form.submit()">
+      <option value="">All Competitions</option>
+      {% for c in competitions %}
+        <option value="{{ c.competition_id }}"
+          {{ 'selected' if comp_id == c.competition_id|string }}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  {% endif %}
+  <div class="form-group" style="align-self:flex-end">
+    <button type="submit">Filter</button>
+    {% if season %}
+      <a href="{{ url_for('player_stats') }}" class="btn btn-secondary btn-sm" style="margin-left:6px">Reset</a>
+    {% endif %}
+  </div>
+</form>
+
+<div class="card" style="margin-top:10px">
+  <h2 style="margin-top:0">
+    {% if season and comp_id %}
+      {% for c in competitions %}{% if c.competition_id|string == comp_id %}{{ c.name }}{% endif %}{% endfor %} – {{ season }}
+    {% elif season %}
+      Season: {{ season }}
+    {% else %}
+      Career Totals
+    {% endif %}
+  </h2>
+  {% if stats %}
+  <table>
+    <thead>
+      <tr>
+        <th>Matches Played</th><th>Goals</th><th>Assists</th>
+        <th>Yellow Cards</th><th>Red Cards</th><th>Avg Rating</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ stats.matches_played }}</td>
+        <td>{{ stats.goals }}</td>
+        <td>{{ stats.assists }}</td>
+        <td>{{ stats.yellow_cards }}</td>
+        <td>{{ stats.red_cards }}</td>
+        <td>{{ stats.avg_rating }}</td>
+      </tr>
+    </tbody>
+  </table>
+  {% else %}
+  <p>No statistics found for the selected filters.</p>
+  {% endif %}
+</div>
+{% endblock %}

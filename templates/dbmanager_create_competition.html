@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Create Competition{% endblock %}
+{% block content %}
+<h1>Create Competition</h1>
+<div class="card">
+  <form method="POST">
+    <div class="form-group">
+      <label for="name">Competition Name</label>
+      <input type="text" id="name" name="name"
+             value="{{ form.get('name','') }}" required
+             placeholder="e.g. Premier League">
+    </div>
+    <div class="form-group">
+      <label for="season">Season</label>
+      <input type="text" id="season" name="season"
+             value="{{ form.get('season','') }}" required
+             placeholder="e.g. 2025/2026">
+    </div>
+    <div class="form-group">
+      <label for="country">Country</label>
+      <input type="text" id="country" name="country"
+             value="{{ form.get('country','') }}" required>
+    </div>
+    <div class="form-group">
+      <label for="competition_type">Type</label>
+      <select id="competition_type" name="competition_type" required>
+        <option value="League" {{ 'selected' if form.get('competition_type')=='League' }}>League</option>
+        <option value="Cup" {{ 'selected' if form.get('competition_type')=='Cup' }}>Cup</option>
+        <option value="International" {{ 'selected' if form.get('competition_type')=='International' }}>International</option>
+      </select>
+    </div>
+    <button type="submit">Create Competition</button>
+    <a href="{{ url_for('dbmanager_dashboard') }}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Fixtures &amp; Results{% endblock %}
+{% block content %}
+<h1>Fixtures &amp; Results – {{ club.club_name }}</h1>
+
+<form method="GET" action="{{ url_for('manager_fixtures') }}" class="filter-form">
+  <div class="form-group">
+    <label>Competition</label>
+    <select name="competition_id">
+      <option value="">All Competitions</option>
+      {% for c in competitions %}
+        <option value="{{ c.competition_id }}"
+          {{ 'selected' if comp_filter == c.competition_id|string }}>
+          {{ c.name }} ({{ c.season }})
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="form-group">
+    <label>Season</label>
+    <input type="text" name="season" placeholder="e.g. 2025/2026" value="{{ season_filter }}">
+  </div>
+  <div class="form-group" style="align-self:flex-end">
+    <button type="submit">Filter</button>
+    <a href="{{ url_for('manager_fixtures') }}" class="btn btn-secondary btn-sm" style="margin-left:6px">Reset</a>
+  </div>
+</form>
+
+{% if matches %}
+<table>
+  <thead>
+    <tr>
+      <th>Date &amp; Time</th>
+      <th>Competition</th>
+      <th>Season</th>
+      <th>Opponent</th>
+      <th>Score</th>
+      <th>Stadium</th>
+      <th>Result</th>
+      <th>Squad</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in matches %}
+    <tr>
+      <td>{{ m.match_datetime }}</td>
+      <td>{{ m.competition }}</td>
+      <td>{{ m.season }}</td>
+      <td>
+        {% if m.home_club == club.club_name %}
+          {{ m.away_club }} (H)
+        {% else %}
+          {{ m.home_club }} (A)
+        {% endif %}
+      </td>
+      <td>
+        {% if m.status == 'Completed' %}
+          {{ m.home_goals }} – {{ m.away_goals }}
+        {% else %}
+          –
+        {% endif %}
+      </td>
+      <td>{{ m.stadium_name }}</td>
+      <td class="{{ 'win' if m.result=='Win' else ('loss' if m.result=='Loss' else ('draw' if m.result=='Draw' else '')) }}">
+        {{ m.result }}
+      </td>
+      <td>{{ m.squad_submitted }} players</td>
+      <td>
+        {% if m.status == 'Scheduled' %}
+          <a href="{{ url_for('manager_squad', match_id=m.match_id) }}" class="btn btn-sm">
+            {{ 'Update Squad' if m.squad_submitted > 0 else 'Submit Squad' }}
+          </a>
+        {% else %}
+          <span style="color:#aaa">Completed</span>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="card"><p>No matches found for the selected filters.</p></div>
+{% endif %}
+{% endblock %}

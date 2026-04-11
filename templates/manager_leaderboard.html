@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Competition Leaderboard{% endblock %}
+{% block content %}
+<h1>Competition Leaderboard</h1>
+
+<form method="GET" action="{{ url_for('manager_leaderboard') }}" class="filter-form">
+  <div class="form-group">
+    <label>Competition</label>
+    <select name="competition_id" onchange="this.form.submit()">
+      <option value="">-- Select --</option>
+      {% for c in competitions %}
+        <option value="{{ c.competition_id }}"
+          {{ 'selected' if comp_id == c.competition_id|string }}>
+          {{ c.name }} – {{ c.season }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="form-group">
+    <label>Category</label>
+    <select name="category" onchange="this.form.submit()">
+      <option value="goals"      {{ 'selected' if category == 'goals' }}>Top Goal Scorers</option>
+      <option value="assists"    {{ 'selected' if category == 'assists' }}>Top Assist Providers</option>
+      <option value="avg_rating" {{ 'selected' if category == 'avg_rating' }}>Highest Avg Rating (min 3 matches)</option>
+    </select>
+  </div>
+  <div class="form-group" style="align-self:flex-end">
+    <button type="submit">View</button>
+  </div>
+</form>
+
+{% if selected_comp %}
+<h2>
+  {{ selected_comp.name }} – {{ selected_comp.season }}:
+  {% if category == 'goals' %}Top Goal Scorers
+  {% elif category == 'assists' %}Top Assist Providers
+  {% else %}Highest Average Rating{% endif %}
+</h2>
+
+{% if leaderboard %}
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Player</th>
+      <th>Club</th>
+      <th>Matches Played</th>
+      <th>
+        {% if category == 'goals' %}Goals
+        {% elif category == 'assists' %}Assists
+        {% else %}Avg Rating{% endif %}
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in leaderboard %}
+    <tr>
+      <td>{{ loop.index }}</td>
+      <td>{{ row.name }} {{ row.surname }}</td>
+      <td>{{ row.club_name }}</td>
+      <td>{{ row.matches_played }}</td>
+      <td><strong>{{ row.metric }}</strong></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="card"><p>No data available for this competition.</p></div>
+{% endif %}
+
+{% elif comp_id %}
+<div class="flash-error">Competition not found.</div>
+{% else %}
+<div class="card"><p>Select a competition to view the leaderboard.</p></div>
+{% endif %}
+{% endblock %}

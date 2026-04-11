@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Sign Up{% endblock %}
+{% block content %}
+<div style="max-width:500px;margin:60px auto">
+  <div class="card">
+    <h1 style="margin-top:0">Create an Account</h1>
+    <p>Select your role to continue:</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <a href="{{ url_for('signup_player') }}" class="btn" style="text-align:center">Player</a>
+      <a href="{{ url_for('signup_manager') }}" class="btn" style="text-align:center">Manager</a>
+      <a href="{{ url_for('signup_referee') }}" class="btn" style="text-align:center">Referee</a>
+      <a href="{{ url_for('signup_dbmanager') }}" class="btn btn-secondary" style="text-align:center">Database Manager</a>
+    </div>
+    <hr style="margin:20px 0">
+    <p style="text-align:center;font-size:14px">
+      Already have an account? <a href="{{ url_for('login') }}">Log in</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

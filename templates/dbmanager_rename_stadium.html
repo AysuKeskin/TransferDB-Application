@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Rename Stadium{% endblock %}
+{% block content %}
+<h1>Rename Stadium</h1>
+<div class="card">
+  <p>Current name: <strong>{{ stadium.stadium_name }}</strong></p>
+  <form method="POST">
+    <div class="form-group">
+      <label for="new_name">New Stadium Name</label>
+      <input type="text" id="new_name" name="new_name"
+             value="{{ stadium.stadium_name }}" required>
+    </div>
+    <button type="submit">Rename</button>
+    <a href="{{ url_for('dbmanager_stadiums') }}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

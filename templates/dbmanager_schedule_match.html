@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Schedule Match{% endblock %}
+{% block content %}
+<h1>Schedule a Match</h1>
+<div class="card">
+  <form method="POST">
+    <div class="form-group">
+      <label for="match_datetime">Date & Time</label>
+      <input type="datetime-local" id="match_datetime" name="match_datetime"
+             value="{{ form.get('match_datetime','') }}" required>
+    </div>
+    <div class="form-group">
+      <label for="stadium_id">Stadium</label>
+      <select id="stadium_id" name="stadium_id" required>
+        <option value="">-- Select Stadium --</option>
+        {% for s in stadiums %}
+        <option value="{{ s.stadium_id }}"
+          {{ 'selected' if form.get('stadium_id')==s.stadium_id|string }}>
+          {{ s.stadium_name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="home_club_id">Home Club</label>
+      <select id="home_club_id" name="home_club_id" required>
+        <option value="">-- Select Home Club --</option>
+        {% for c in clubs %}
+        <option value="{{ c.club_id }}"
+          {{ 'selected' if form.get('home_club_id')==c.club_id|string }}>
+          {{ c.club_name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="away_club_id">Away Club</label>
+      <select id="away_club_id" name="away_club_id" required>
+        <option value="">-- Select Away Club --</option>
+        {% for c in clubs %}
+        <option value="{{ c.club_id }}"
+          {{ 'selected' if form.get('away_club_id')==c.club_id|string }}>
+          {{ c.club_name }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="referee_id">Referee</label>
+      <select id="referee_id" name="referee_id" required>
+        <option value="">-- Select Referee --</option>
+        {% for r in referees %}
+        <option value="{{ r.person_id }}"
+          {{ 'selected' if form.get('referee_id')==r.person_id|string }}>
+          {{ r.name }} {{ r.surname }}
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label for="competition_id">Competition</label>
+      <select id="competition_id" name="competition_id" required>
+        <option value="">-- Select Competition --</option>
+        {% for cp in competitions %}
+        <option value="{{ cp.competition_id }}"
+          {{ 'selected' if form.get('competition_id')==cp.competition_id|string }}>
+          {{ cp.name }} ({{ cp.season }})
+        </option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit">Schedule Match</button>
+    <a href="{{ url_for('dbmanager_dashboard') }}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

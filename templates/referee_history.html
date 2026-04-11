@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Referee Match History{% endblock %}
+{% block content %}
+<h1>Match History</h1>
+
+{% if matches %}
+<table>
+  <thead>
+    <tr>
+      <th>Date & Time</th>
+      <th>Competition</th>
+      <th>Season</th>
+      <th>Home</th>
+      <th>Away</th>
+      <th>Stadium</th>
+      <th>Result</th>
+      <th>Attendance</th>
+      <th>Yellow Cards</th>
+      <th>Red Cards</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for m in matches %}
+    <tr>
+      <td>{{ m.match_datetime }}</td>
+      <td>{{ m.competition }}</td>
+      <td>{{ m.season }}</td>
+      <td>{{ m.home_club }}</td>
+      <td>{{ m.away_club }}</td>
+      <td>{{ m.stadium_name }}</td>
+      <td>
+        {% if m.status == 'Completed' %}
+          {{ m.home_goals }} - {{ m.away_goals }}
+        {% else %}
+          -
+        {% endif %}
+      </td>
+      <td>{{ '{:,}'.format(m.attendance) if m.attendance else '-' }}</td>
+      <td>{{ m.total_yellow if m.status == 'Completed' else '-' }}</td>
+      <td>{{ m.total_red if m.status == 'Completed' else '-' }}</td>
+      <td>
+        {% if m.status == 'Completed' %}
+          Completed
+        {% else %}
+          Scheduled
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<div class="card"><p>No matches found in your history.</p></div>
+{% endif %}
+{% endblock %}
