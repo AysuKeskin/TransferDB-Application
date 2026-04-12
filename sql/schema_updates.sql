@@ -7,41 +7,32 @@
 USE DB;
 
 -- -------------------------------------------------------
--- 1. Add status column to Match (only if not exists)
--- -------------------------------------------------------
-DROP PROCEDURE IF EXISTS add_status_column;
-DELIMITER //
-CREATE PROCEDURE add_status_column()
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
-        WHERE TABLE_SCHEMA = DATABASE()
-          AND TABLE_NAME   = 'Match'
-          AND COLUMN_NAME  = 'status'
-    ) THEN
-        ALTER TABLE `Match`
-            ADD COLUMN status ENUM('Scheduled', 'Completed') NOT NULL DEFAULT 'Scheduled';
-    END IF;
-END//
-DELIMITER ;
-CALL add_status_column();
-DROP PROCEDURE IF EXISTS add_status_column;
-
--- -------------------------------------------------------
--- 2. Make attendance, home_goals, away_goals nullable
+-- 1. Make attendance, home_goals, away_goals nullable
 -- -------------------------------------------------------
 ALTER TABLE `Match`
     MODIFY COLUMN attendance  INT NULL,
     MODIFY COLUMN home_goals  INT NULL,
     MODIFY COLUMN away_goals  INT NULL;
 
--- Mark existing rows with score data as Completed
-UPDATE `Match`
-SET status = 'Completed'
-WHERE status = 'Scheduled'
-  AND attendance IS NOT NULL
-  AND home_goals IS NOT NULL
-  AND away_goals IS NOT NULL;
+-- -------------------------------------------------------
+-- 2. Drop status column if it exists
+-- -------------------------------------------------------
+DROP PROCEDURE IF EXISTS drop_status_column;
+DELIMITER //
+CREATE PROCEDURE drop_status_column()
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS
+        WHERE TABLE_SCHEMA = DATABASE()
+          AND TABLE_NAME   = 'Match'
+          AND COLUMN_NAME  = 'status'
+    ) THEN
+        ALTER TABLE `Match` DROP COLUMN status;
+    END IF;
+END//
+DELIMITER ;
+CALL drop_status_column();
+DROP PROCEDURE IF EXISTS drop_status_column;
 
 -- -------------------------------------------------------
 -- 3. Make Club.manager_id nullable

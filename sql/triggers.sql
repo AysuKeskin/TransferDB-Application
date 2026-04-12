@@ -19,6 +19,13 @@ DROP TRIGGER IF EXISTS trg_check_no_duplicate_loan;
 DROP TRIGGER IF EXISTS trg_auto_terminate_old_perm;
 DROP TRIGGER IF EXISTS trg_check_loan_requires_permanent;
 DROP TRIGGER IF EXISTS trg_check_competition_unique;
+DROP TRIGGER IF EXISTS trg_check_player_disjoint;
+DROP TRIGGER IF EXISTS trg_check_manager_disjoint;
+DROP TRIGGER IF EXISTS trg_check_referee_disjoint;
+DROP TRIGGER IF EXISTS trg_check_contract_disjoint_perm;
+DROP TRIGGER IF EXISTS trg_check_contract_disjoint_loan;
+DROP TRIGGER IF EXISTS trg_check_yellow_red_card;
+DROP TRIGGER IF EXISTS trg_check_yellow_red_card_update;
 
 DELIMITER //
 
@@ -69,7 +76,7 @@ FOR EACH ROW
 BEGIN
     DECLARE cap INT DEFAULT 0;
 
-    IF NEW.status = 'Completed' AND NEW.attendance IS NOT NULL THEN
+    IF NEW.attendance IS NOT NULL THEN
         SELECT capacity INTO cap
         FROM Stadium
         WHERE stadium_id = NEW.stadium_id;
@@ -315,6 +322,130 @@ BEGIN
     IF dup_count > 0 THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'A competition with this name and season already exists.';
+    END IF;
+END//
+
+-- ================================================================
+-- 10. ISA Disjointness: Player cannot also be Manager or Referee
+-- ================================================================
+CREATE TRIGGER trg_check_player_disjoint
+BEFORE INSERT ON Player
+FOR EACH ROW
+BEGIN
+    DECLARE cnt INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO cnt
+    FROM Manager WHERE person_id = NEW.person_id;
+    IF cnt > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'This person is already registered as a Manager and cannot also be a Player.';
+    END IF;
+
+    SELECT COUNT(*) INTO cnt
+    FROM Referee WHERE person_id = NEW.person_id;
+    IF cnt > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'This person is already registered as a Referee and cannot also be a Player.';
+    END IF;
+END//
+
+-- ================================================================
+-- 10b. ISA Disjointness: Manager cannot also be Player or Referee
+-- ================================================================
+CREATE TRIGGER trg_check_manager_disjoint
+BEFORE INSERT ON Manager
+FOR EACH ROW
+BEGIN
+    DECLARE cnt INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO cnt
+    FROM Player WHERE person_id = NEW.person_id;
+    IF cnt > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'This person is already registered as a Player and cannot also be a Manager.';
+    END IF;
+
+    SELECT COUNT(*) INTO cnt
+    FROM Referee WHERE person_id = NEW.person_id;
+    IF cnt > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'This person is already registered as a Referee and cannot also be a Manager.';
+    END IF;
+END//
+
+-- ================================================================
+-- 10c. ISA Disjointness: Referee cannot also be Player or Manager
+-- ================================================================
+CREATE TRIGGER trg_check_referee_disjoint
+BEFORE INSERT ON Referee
+FOR EACH ROW
+BEGIN
+    DECLARE cnt INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO cnt
+    FROM Player WHERE person_id = NEW.person_id;
+    IF cnt > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'This person is already registered as a Player and cannot also be a Referee.';
+    END IF;
+
+    SELECT COUNT(*) INTO cnt
+    FROM Manager WHERE person_id = NEW.person_id;
+    IF cnt > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'This person is already registered as a Manager and cannot also be a Referee.';
+    END IF;
+END//
+
+-- ================================================================
+-- 11. ISA Disjointness: Contract cannot be both Permanent and Loan
+-- ================================================================
+CREATE TRIGGER trg_check_contract_disjoint_perm
+BEFORE INSERT ON Permanent_Contract
+FOR EACH ROW
+BEGIN
+    DECLARE cnt INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO cnt
+    FROM Loan_Contract WHERE contract_id = NEW.contract_id;
+    IF cnt > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'This contract is already a Loan Contract and cannot also be a Permanent Contract.';
+    END IF;
+END//
+
+CREATE TRIGGER trg_check_contract_disjoint_loan
+BEFORE INSERT ON Loan_Contract
+FOR EACH ROW
+BEGIN
+    DECLARE cnt INT DEFAULT 0;
+
+    SELECT COUNT(*) INTO cnt
+    FROM Permanent_Contract WHERE contract_id = NEW.contract_id;
+    IF cnt > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'This contract is already a Permanent Contract and cannot also be a Loan Contract.';
+    END IF;
+END//
+
+-- ================================================================
+-- 12. Two yellow cards automatically imply a red card
+-- ================================================================
+CREATE TRIGGER trg_check_yellow_red_card
+BEFORE INSERT ON Match_Participation
+FOR EACH ROW
+BEGIN
+    IF NEW.yellow_cards >= 2 AND NEW.red_cards = 0 THEN
+        SET NEW.red_cards = 1;
+    END IF;
+END//
+
+CREATE TRIGGER trg_check_yellow_red_card_update
+BEFORE UPDATE ON Match_Participation
+FOR EACH ROW
+BEGIN
+    IF NEW.yellow_cards >= 2 AND NEW.red_cards = 0 THEN
+        SET NEW.red_cards = 1;
     END IF;
 END//
 

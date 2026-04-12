@@ -121,7 +121,6 @@ CREATE TABLE `Match` (
     home_goals INT NULL,
     away_goals INT NULL,
     referee_id INT NOT NULL,
-    status ENUM('Scheduled', 'Completed') NOT NULL DEFAULT 'Scheduled',
     PRIMARY KEY (match_id),
     FOREIGN KEY (competition_id)
         REFERENCES Competition(competition_id)

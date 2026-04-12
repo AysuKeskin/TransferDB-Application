@@ -446,7 +446,8 @@ def player_stats():
 def player_matches():
     pid = session['person_id']
     matches = execute_read(
-        '''SELECT m.match_id, m.match_datetime, m.home_goals, m.away_goals, m.status,
+        '''SELECT m.match_id, m.match_datetime, m.home_goals, m.away_goals,
+                  CASE WHEN m.home_goals IS NOT NULL THEN 'Completed' ELSE 'Scheduled' END AS status,
                   comp.name AS competition, comp.season,
                   s.stadium_name,
                   hc.club_name AS home_club, ac.club_name AS away_club,
@@ -455,7 +456,7 @@ def player_matches():
                   mp.is_starter,
                   CASE WHEN mp.club_id = m.home_club_id THEN ac.club_name
                        ELSE hc.club_name END AS opposing_club,
-                  CASE WHEN m.status != 'Completed' THEN 'Scheduled'
+                  CASE WHEN m.home_goals IS NULL THEN 'Scheduled'
                        WHEN (mp.club_id = m.home_club_id AND m.home_goals > m.away_goals)
                          OR (mp.club_id = m.away_club_id AND m.away_goals > m.home_goals) THEN 'Win'
                        WHEN m.home_goals = m.away_goals THEN 'Draw'
@@ -547,10 +548,11 @@ def manager_fixtures():
     )
 
     query = '''
-        SELECT m.match_id, m.match_datetime, m.home_goals, m.away_goals, m.status,
+        SELECT m.match_id, m.match_datetime, m.home_goals, m.away_goals,
+               CASE WHEN m.home_goals IS NOT NULL THEN 'Completed' ELSE 'Scheduled' END AS status,
                hc.club_name AS home_club, ac.club_name AS away_club,
                s.stadium_name, comp.name AS competition, comp.season,
-               CASE WHEN m.status != 'Completed' THEN 'Scheduled'
+               CASE WHEN m.home_goals IS NULL THEN 'Scheduled'
                     WHEN (m.home_club_id = %s AND m.home_goals > m.away_goals)
                       OR (m.away_club_id = %s AND m.away_goals > m.home_goals) THEN 'Win'
                     WHEN m.home_goals = m.away_goals THEN 'Draw'
@@ -595,7 +597,7 @@ def manager_squad(match_id):
     club_id = club['club_id']
 
     match = execute_read_one(
-        '''SELECT m.match_id, m.match_datetime, m.status,
+        '''SELECT m.match_id, m.match_datetime, m.home_goals,
                   hc.club_name AS home_club, ac.club_name AS away_club,
                   comp.name AS competition, comp.season
            FROM `Match` m
@@ -610,7 +612,7 @@ def manager_squad(match_id):
         flash('Match not found or not associated with your club.', 'error')
         return redirect(url_for('manager_fixtures'))
 
-    if match['status'] == 'Completed':
+    if match['home_goals'] is not None:
         flash('Cannot modify squad for a completed match.', 'error')
         return redirect(url_for('manager_fixtures'))
 
@@ -740,7 +742,7 @@ def manager_standings():
                                ELSE 0 END) AS points
                FROM Club cl
                JOIN `Match` m ON (m.home_club_id = cl.club_id OR m.away_club_id = cl.club_id)
-               WHERE m.competition_id = %s AND m.status = 'Completed'
+               WHERE m.competition_id = %s AND m.home_goals IS NOT NULL
                GROUP BY cl.club_id, cl.club_name
                ORDER BY points DESC, goal_diff DESC, goals_scored DESC''',
             (comp_id,)
@@ -895,7 +897,7 @@ def manager_leaderboard():
             JOIN Person p ON mp.player_id = p.person_id
             JOIN Club cl ON mp.club_id = cl.club_id
             JOIN `Match` m ON mp.match_id = m.match_id
-            WHERE m.competition_id = %s AND m.status = 'Completed'
+            WHERE m.competition_id = %s AND m.home_goals IS NOT NULL
             GROUP BY mp.player_id, p.name, p.surname, cl.club_name
             ''' + having_clause + '''
             ORDER BY metric DESC
@@ -935,7 +937,7 @@ def referee_profile():
 def referee_matches():
     pid = session['person_id']
     matches = execute_read(
-        '''SELECT m.match_id, m.match_datetime, m.status,
+        '''SELECT m.match_id, m.match_datetime,
                   hc.club_name AS home_club, ac.club_name AS away_club,
                   s.stadium_name, comp.name AS competition, comp.season,
                   (SELECT COUNT(*) FROM Match_Participation mp2
@@ -945,7 +947,7 @@ def referee_matches():
            JOIN Club ac ON m.away_club_id = ac.club_id
            JOIN Stadium s ON m.stadium_id = s.stadium_id
            JOIN Competition comp ON m.competition_id = comp.competition_id
-           WHERE m.referee_id = %s AND m.status = 'Scheduled' AND m.match_datetime < NOW()
+           WHERE m.referee_id = %s AND m.home_goals IS NULL AND m.match_datetime < NOW()
            ORDER BY m.match_datetime DESC''',
         (pid,)
     )
@@ -959,7 +961,7 @@ def referee_submit(match_id):
     pid = session['person_id']
 
     match = execute_read_one(
-        '''SELECT m.match_id, m.match_datetime, m.status, m.stadium_id,
+        '''SELECT m.match_id, m.match_datetime, m.home_goals, m.stadium_id,
                   m.home_club_id, m.away_club_id,
                   hc.club_name AS home_club, ac.club_name AS away_club,
                   s.stadium_name, s.capacity,
@@ -976,7 +978,7 @@ def referee_submit(match_id):
         flash('Match not found or not assigned to you.', 'error')
         return redirect(url_for('referee_matches'))
 
-    if match['status'] == 'Completed':
+    if match['home_goals'] is not None:
         flash('Result already submitted for this match.', 'error')
         return redirect(url_for('referee_matches'))
 
@@ -1023,7 +1025,7 @@ def referee_submit(match_id):
                 cur.execute(
                     '''UPDATE `Match`
                        SET home_goals = %s, away_goals = %s,
-                           attendance = %s, status = 'Completed'
+                           attendance = %s
                        WHERE match_id = %s''',
                     (home_goals, away_goals, attendance, match_id)
                 )
@@ -1183,8 +1185,8 @@ def dbmanager_schedule_match():
                     cur.execute(
                         '''INSERT INTO `Match`
                            (match_id, match_datetime, stadium_id, home_club_id,
-                            away_club_id, referee_id, competition_id, status)
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, 'Scheduled')''',
+                            away_club_id, referee_id, competition_id)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s)''',
                         (nid, match_datetime, stadium_id, home_club_id,
                          away_club_id, referee_id, competition_id)
                     )
@@ -1534,7 +1536,7 @@ def referee_stats():
                   COALESCE(SUM(mp.red_cards), 0) AS total_red
            FROM `Match` m
            LEFT JOIN Match_Participation mp ON mp.match_id = m.match_id
-           WHERE m.referee_id = %s AND m.status = 'Completed' ''',
+           WHERE m.referee_id = %s AND m.home_goals IS NOT NULL ''',
         (pid,)
     )
     return render_template('referee_stats.html', stats=stats)
@@ -1546,8 +1548,9 @@ def referee_stats():
 def referee_history():
     pid = session['person_id']
     matches = execute_read(
-        '''SELECT m.match_id, m.match_datetime, m.status,
+        '''SELECT m.match_id, m.match_datetime,
                   m.home_goals, m.away_goals, m.attendance,
+                  CASE WHEN m.home_goals IS NOT NULL THEN 'Completed' ELSE 'Scheduled' END AS status,
                   hc.club_name AS home_club, ac.club_name AS away_club,
                   s.stadium_name, comp.name AS competition, comp.season,
                   COALESCE((SELECT SUM(mp2.yellow_cards) FROM Match_Participation mp2

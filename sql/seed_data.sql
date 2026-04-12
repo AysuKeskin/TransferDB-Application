@@ -467,11 +467,11 @@ INSERT INTO Match_Participation VALUES (6, 54, 4, 1, 90, 'Forward',    0, 0, 0, 
 -- ============================================================
 -- SCHEDULED FUTURE MATCHES (no results yet)
 -- ============================================================
-INSERT INTO `Match` (match_id, competition_id, home_club_id, away_club_id, stadium_id, match_datetime, referee_id, status)
-VALUES (7, 1, 1, 3, 1, '2026-05-10 17:00:00', 5, 'Scheduled');
-INSERT INTO `Match` (match_id, competition_id, home_club_id, away_club_id, stadium_id, match_datetime, referee_id, status)
-VALUES (8, 1, 4, 2, 4, '2026-05-10 20:00:00', 6, 'Scheduled');
-INSERT INTO `Match` (match_id, competition_id, home_club_id, away_club_id, stadium_id, match_datetime, referee_id, status)
-VALUES (9, 2, 3, 2, 3, '2026-05-17 21:00:00', 7, 'Scheduled');
-INSERT INTO `Match` (match_id, competition_id, home_club_id, away_club_id, stadium_id, match_datetime, referee_id, status)
-VALUES (10, 1, 2, 1, 2, '2026-06-01 16:00:00', 5, 'Scheduled');
+INSERT INTO `Match` (match_id, competition_id, home_club_id, away_club_id, stadium_id, match_datetime, referee_id)
+VALUES (7, 1, 1, 3, 1, '2026-05-10 17:00:00', 5);
+INSERT INTO `Match` (match_id, competition_id, home_club_id, away_club_id, stadium_id, match_datetime, referee_id)
+VALUES (8, 1, 4, 2, 4, '2026-05-10 20:00:00', 6);
+INSERT INTO `Match` (match_id, competition_id, home_club_id, away_club_id, stadium_id, match_datetime, referee_id)
+VALUES (9, 2, 3, 2, 3, '2026-05-17 21:00:00', 7);
+INSERT INTO `Match` (match_id, competition_id, home_club_id, away_club_id, stadium_id, match_datetime, referee_id)
+VALUES (10, 1, 2, 1, 2, '2026-06-01 16:00:00', 5);
