@@ -1,19 +1,19 @@
 {% extends 'base.html' %}
 {% block title %}Sign Up{% endblock %}
 {% block content %}
-<div style="max-width:500px;margin:60px auto">
+<div style="max-width:420px;margin:50px auto">
   <div class="card">
-    <h1 style="margin-top:0">Create an Account</h1>
-    <p>Select your role to continue:</p>
-    <div style="display:flex;flex-direction:column;gap:10px">
+    <h2 style="text-align:center;margin-bottom:12px">Create an Account</h2>
+    <p style="text-align:center;font-size:13px;color:#666;margin-bottom:14px">Select your role to continue:</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
       <a href="{{ url_for('signup_player') }}" class="btn" style="text-align:center">Player</a>
       <a href="{{ url_for('signup_manager') }}" class="btn" style="text-align:center">Manager</a>
       <a href="{{ url_for('signup_referee') }}" class="btn" style="text-align:center">Referee</a>
       <a href="{{ url_for('signup_dbmanager') }}" class="btn btn-secondary" style="text-align:center">Database Manager</a>
     </div>
-    <hr style="margin:20px 0">
-    <p style="text-align:center;font-size:14px">
-      Already have an account? <a href="{{ url_for('login') }}">Log in</a>
+    <hr>
+    <p style="text-align:center;font-size:13px">
+      Already have an account? <a href="{{ url_for('login') }}" style="color:#2d572c;font-weight:600">Log in</a>
     </p>
   </div>
 </div>

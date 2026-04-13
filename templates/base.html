@@ -4,42 +4,55 @@
   <meta charset="UTF-8">
   <title>TransferDB – {% block title %}{% endblock %}</title>
   <style>
-    *{box-sizing:border-box}
-    body{font-family:Arial,sans-serif;margin:0;padding:0;background:#f5f5f5}
-    nav{background:#1a1a2e;padding:10px 20px;display:flex;align-items:center;flex-wrap:wrap;gap:8px}
-    nav a{color:#e0e0e0;text-decoration:none;padding:4px 10px;border-radius:4px;font-size:14px}
-    nav a:hover{background:#16213e;color:#fff}
-    .nav-right{margin-left:auto;color:#aaa;font-size:13px}
-    .nav-right a{color:#e0e0e0}
-    .container{max-width:1100px;margin:20px auto;padding:0 20px}
-    h1,h2,h3{color:#1a1a2e}
-    .flash-error{background:#ffe0e0;color:#c00;padding:10px 16px;border-left:4px solid #c00;margin:10px 0;border-radius:2px}
-    .flash-success{background:#e0ffe0;color:#070;padding:10px 16px;border-left:4px solid #070;margin:10px 0;border-radius:2px}
-    table{border-collapse:collapse;width:100%;background:#fff;margin:10px 0}
-    th,td{border:1px solid #ddd;padding:8px 12px;text-align:left;font-size:14px}
-    th{background:#1a1a2e;color:#fff}
-    tr:nth-child(even){background:#f9f9f9}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background:#eaeaea;color:#333}
+    nav{background:#2d572c;padding:8px 16px;display:flex;align-items:center;flex-wrap:wrap;gap:6px;border-bottom:3px solid #1e3d1e}
+    nav a{color:#d4e8d0;text-decoration:none;padding:5px 10px;font-size:13px}
+    nav a:hover{background:#3a6f38;color:#fff;border-radius:3px}
+    nav a strong{color:#fff;font-size:15px}
+    .nav-right{margin-left:auto;color:#b0cead;font-size:12px}
+    .nav-right a{color:#d4e8d0}
+    .container{max-width:1050px;margin:16px auto;padding:0 16px}
+    h1{color:#2d572c;font-size:22px;margin:14px 0 10px;border-bottom:2px solid #2d572c;padding-bottom:6px}
+    h2{color:#2d572c;font-size:18px;margin:12px 0 8px}
+    h3{color:#3a6f38;font-size:16px;margin:8px 0 4px}
+    .flash-error{background:#f8d7da;color:#721c24;padding:9px 14px;border:1px solid #f5c6cb;margin:8px 0;font-size:13px}
+    .flash-success{background:#d4edda;color:#155724;padding:9px 14px;border:1px solid #c3e6cb;margin:8px 0;font-size:13px}
+    table{border-collapse:collapse;width:100%;margin:8px 0;font-size:13px}
+    th,td{border:1px solid #bbb;padding:6px 10px;text-align:left}
+    th{background:#3a6f38;color:#fff;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:0.3px}
+    tr:nth-child(even){background:#f4f4f4}
+    tr:hover{background:#e8f0e6}
     input[type=text],input[type=password],input[type=number],input[type=date],
     input[type=datetime-local],select,input[type=email]{
-      padding:7px 10px;border:1px solid #ccc;border-radius:4px;font-size:14px;width:100%;margin:4px 0}
-    .form-group{margin:10px 0}
-    .form-group label{display:block;font-size:14px;font-weight:bold;margin-bottom:2px}
-    button,.btn{background:#1a1a2e;color:#fff;padding:8px 18px;border:none;border-radius:4px;
-                cursor:pointer;font-size:14px;text-decoration:none;display:inline-block}
-    button:hover,.btn:hover{background:#16213e}
-    .btn-sm{padding:4px 10px;font-size:13px}
-    .btn-secondary{background:#555}
-    .card{background:#fff;border:1px solid #ddd;border-radius:6px;padding:20px;margin:10px 0}
-    .profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .profile-item{padding:6px 0;border-bottom:1px solid #eee}
-    .profile-label{font-weight:bold;color:#555;font-size:13px}
-    .profile-value{font-size:15px;color:#222}
+      padding:6px 8px;border:1px solid #999;font-size:13px;width:100%;margin:3px 0;background:#fff}
+    input:focus,select:focus{outline:2px solid #3a6f38;border-color:#3a6f38}
+    .form-group{margin:8px 0}
+    .form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:2px;color:#444}
+    button,.btn{background:#2d572c;color:#fff;padding:7px 16px;border:1px solid #1e3d1e;
+                cursor:pointer;font-size:13px;text-decoration:none;display:inline-block}
+    button:hover,.btn:hover{background:#3a6f38}
+    .btn-sm{padding:3px 8px;font-size:12px}
+    .btn-secondary{background:#666;border-color:#555}
+    .btn-secondary:hover{background:#777}
+    .card{background:#fff;border:1px solid #ccc;padding:16px;margin:8px 0}
+    .card:hover{border-color:#2d572c}
+    .profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .profile-item{padding:5px 0;border-bottom:1px dotted #ccc}
+    .profile-label{font-weight:600;color:#666;font-size:12px;text-transform:uppercase}
+    .profile-value{font-size:14px;color:#222;margin-top:1px}
     select[multiple]{height:auto}
-    .filter-form{background:#fff;padding:16px;border:1px solid #ddd;border-radius:6px;margin:10px 0;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
-    .filter-form .form-group{margin:0;min-width:160px}
-    .win{color:green;font-weight:bold}
-    .loss{color:red}
-    .draw{color:#888}
+    .filter-form{background:#fff;padding:14px;border:1px solid #ccc;margin:8px 0;display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+    .filter-form .form-group{margin:0;min-width:150px}
+    .win{color:#1a7a1a;font-weight:bold}
+    .loss{color:#c0392b}
+    .draw{color:#777}
+    .dashboard-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+    .dashboard-grid a{text-decoration:none;color:inherit}
+    .stat-box{text-align:center;padding:20px;background:#fff;border:1px solid #ccc}
+    .stat-box .stat-num{font-size:28px;font-weight:700;color:#2d572c}
+    .stat-box .stat-label{font-size:12px;color:#666;text-transform:uppercase;margin-top:4px}
+    hr{border:none;border-top:1px solid #ccc;margin:16px 0}
   </style>
 </head>
 <body>

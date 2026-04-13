@@ -1021,16 +1021,8 @@ def referee_submit(match_id):
         conn = get_db()
         try:
             with conn.cursor() as cur:
-                # Update match (trigger checks attendance <= capacity)
-                cur.execute(
-                    '''UPDATE `Match`
-                       SET home_goals = %s, away_goals = %s,
-                           attendance = %s
-                       WHERE match_id = %s''',
-                    (home_goals, away_goals, attendance, match_id)
-                )
-
-                # Process player stats for both clubs
+                # Process player stats FIRST (before marking match completed,
+                # since DB trigger blocks participation inserts on completed matches)
                 for club_id in [match['home_club_id'], match['away_club_id']]:
                     players = home_players if club_id == match['home_club_id'] else away_players
                     for pl in players:
@@ -1079,6 +1071,15 @@ def referee_submit(match_id):
                             (match_id, player_id, club_id, is_starter,
                              minutes, position, goals, assists, yellow, red, rating)
                         )
+
+                # Update match score LAST (trigger checks attendance <= capacity)
+                cur.execute(
+                    '''UPDATE `Match`
+                       SET home_goals = %s, away_goals = %s,
+                           attendance = %s
+                       WHERE match_id = %s''',
+                    (home_goals, away_goals, attendance, match_id)
+                )
 
             conn.commit()
             flash('Match result submitted successfully!', 'success')
@@ -1284,11 +1285,6 @@ def dbmanager_transfer():
                     cur.execute(
                         'INSERT INTO Permanent_Contract (contract_id) VALUES (%s)', (cid,)
                     )
-                    # Update market value to match transfer fee
-                    cur.execute(
-                        'UPDATE Player SET market_value = %s WHERE person_id = %s',
-                        (fee_val, player_id)
-                    )
                 else:
                     # Loan: find the player's active permanent contract
                     cur.execute(
@@ -1315,7 +1311,7 @@ def dbmanager_transfer():
                 cur.execute('SELECT COALESCE(MAX(transfer_id), 0) + 1 AS nid FROM Transfer_Record')
                 tid = cur.fetchone()['nid']
 
-                transfer_type = contract_type  # 'Permanent' or 'Loan'
+                transfer_type = 'Purchase' if contract_type == 'Permanent' else 'Loan'
                 cur.execute(
                     '''INSERT INTO Transfer_Record
                        (transfer_id, player_id, from_club_id, to_club_id,
@@ -1570,4 +1566,4 @@ def referee_history():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5001)

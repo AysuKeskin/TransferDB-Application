@@ -1,11 +1,29 @@
 -- Run AFTER schema.sql (or schema_updates.sql for existing DBs)
 -- mysql -u root -p DB < sql/triggers.sql
+--
+-- MySQL allows only ONE trigger per (timing, event, table) combination.
+-- All checks for the same combination are merged into a single trigger.
 
 USE DB;
 
 -- ================================================================
--- Drop existing triggers/procedures so this file is idempotent
+-- Drop all triggers so this file is idempotent
 -- ================================================================
+DROP TRIGGER IF EXISTS trg_match_before_insert;
+DROP TRIGGER IF EXISTS trg_match_before_update;
+DROP TRIGGER IF EXISTS trg_participation_before_insert;
+DROP TRIGGER IF EXISTS trg_participation_before_update;
+DROP TRIGGER IF EXISTS trg_contract_before_insert;
+DROP TRIGGER IF EXISTS trg_permanent_contract_before_insert;
+DROP TRIGGER IF EXISTS trg_loan_contract_before_insert;
+DROP TRIGGER IF EXISTS trg_competition_before_insert;
+DROP TRIGGER IF EXISTS trg_player_before_insert;
+DROP TRIGGER IF EXISTS trg_manager_before_insert;
+DROP TRIGGER IF EXISTS trg_referee_before_insert;
+DROP TRIGGER IF EXISTS trg_transfer_before_insert;
+DROP TRIGGER IF EXISTS trg_transfer_after_insert;
+
+-- also drop old individual trigger names (cleanup)
 DROP TRIGGER IF EXISTS trg_check_match_conflict;
 DROP TRIGGER IF EXISTS trg_check_match_future;
 DROP TRIGGER IF EXISTS trg_check_match_result_attendance;
@@ -16,7 +34,6 @@ DROP TRIGGER IF EXISTS trg_check_loan_restriction;
 DROP TRIGGER IF EXISTS trg_check_contract_max_active;
 DROP TRIGGER IF EXISTS trg_check_no_duplicate_perm;
 DROP TRIGGER IF EXISTS trg_check_no_duplicate_loan;
-DROP TRIGGER IF EXISTS trg_auto_terminate_old_perm;
 DROP TRIGGER IF EXISTS trg_check_loan_requires_permanent;
 DROP TRIGGER IF EXISTS trg_check_competition_unique;
 DROP TRIGGER IF EXISTS trg_check_player_disjoint;
@@ -26,18 +43,26 @@ DROP TRIGGER IF EXISTS trg_check_contract_disjoint_perm;
 DROP TRIGGER IF EXISTS trg_check_contract_disjoint_loan;
 DROP TRIGGER IF EXISTS trg_check_yellow_red_card;
 DROP TRIGGER IF EXISTS trg_check_yellow_red_card_update;
+DROP TRIGGER IF EXISTS trg_check_result_after_match;
+DROP TRIGGER IF EXISTS trg_check_participation_club_in_match;
+DROP TRIGGER IF EXISTS trg_check_transfer_from_club;
+DROP TRIGGER IF EXISTS trg_check_no_participation_completed_match;
+DROP TRIGGER IF EXISTS trg_check_market_value_on_purchase;
 
 DELIMITER //
 
 -- ================================================================
--- 1. Match scheduling: no 120-minute overlap for stadium/referee/clubs
+-- MATCH — BEFORE INSERT
+--   1. No 120-minute overlap for stadium / referee / clubs
+--   2. Match must be scheduled in the future
 -- ================================================================
-CREATE TRIGGER trg_check_match_conflict
+CREATE TRIGGER trg_match_before_insert
 BEFORE INSERT ON `Match`
 FOR EACH ROW
 BEGIN
     DECLARE conflict_count INT DEFAULT 0;
 
+    -- 1. 120-minute overlap check
     SELECT COUNT(*) INTO conflict_count
     FROM `Match`
     WHERE ABS(TIMESTAMPDIFF(MINUTE, match_datetime, NEW.match_datetime)) < 120
@@ -52,15 +77,8 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Match conflicts with an existing match within 120 minutes (stadium, referee, or club overlap).';
     END IF;
-END//
 
--- ================================================================
--- 1b. Match scheduling: must be in the future
--- ================================================================
-CREATE TRIGGER trg_check_match_future
-BEFORE INSERT ON `Match`
-FOR EACH ROW
-BEGIN
+    -- 2. Must be in the future
     IF NEW.match_datetime <= NOW() THEN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Match must be scheduled for a future date and time.';
@@ -68,14 +86,20 @@ BEGIN
 END//
 
 -- ================================================================
--- 2. Match result: attendance must not exceed stadium capacity
+-- MATCH — BEFORE UPDATE
+--   1. Attendance must not exceed stadium capacity
+--   2. Results only after match time has passed
+--   3. Each club must have >= 11 players in squad
 -- ================================================================
-CREATE TRIGGER trg_check_match_result_attendance
+CREATE TRIGGER trg_match_before_update
 BEFORE UPDATE ON `Match`
 FOR EACH ROW
 BEGIN
     DECLARE cap INT DEFAULT 0;
+    DECLARE home_squad INT DEFAULT 0;
+    DECLARE away_squad INT DEFAULT 0;
 
+    -- 1. Attendance <= stadium capacity
     IF NEW.attendance IS NOT NULL THEN
         SELECT capacity INTO cap
         FROM Stadium
@@ -86,17 +110,85 @@ BEGIN
                 SET MESSAGE_TEXT = 'Attendance exceeds stadium capacity.';
         END IF;
     END IF;
+
+    -- The rest only fires when results are being submitted for the first time
+    IF (NEW.home_goals IS NOT NULL OR NEW.away_goals IS NOT NULL OR NEW.attendance IS NOT NULL)
+       AND (OLD.home_goals IS NULL AND OLD.away_goals IS NULL AND OLD.attendance IS NULL) THEN
+
+        -- 2. Match must be in the past
+        IF NEW.match_datetime > NOW() THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Cannot submit match results before the match has been played.';
+        END IF;
+
+        -- 3a. Home club >= 11 players
+        SELECT COUNT(*) INTO home_squad
+        FROM Match_Participation
+        WHERE match_id = NEW.match_id AND club_id = NEW.home_club_id;
+
+        IF home_squad < 11 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Home club must have at least 11 players in the squad before submitting results.';
+        END IF;
+
+        -- 3b. Away club >= 11 players
+        SELECT COUNT(*) INTO away_squad
+        FROM Match_Participation
+        WHERE match_id = NEW.match_id AND club_id = NEW.away_club_id;
+
+        IF away_squad < 11 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Away club must have at least 11 players in the squad before submitting results.';
+        END IF;
+    END IF;
 END//
 
 -- ================================================================
--- 3. Match Participation: max 11 starters per club per match
+-- MATCH_PARTICIPATION — BEFORE INSERT
+--   1. Cannot add players to a completed match
+--   2. Club must be home or away in the match
+--   3. Max 11 starters per club per match
+--   4. Max 23 squad members per club per match
+--   5. Player must have active contract with the club
+--   6. Player on loan cannot play for parent club
+--   7. Two yellow cards => automatic red card
 -- ================================================================
-CREATE TRIGGER trg_check_starter_limit
+CREATE TRIGGER trg_participation_before_insert
 BEFORE INSERT ON Match_Participation
 FOR EACH ROW
 BEGIN
+    DECLARE match_completed INT DEFAULT 0;
+    DECLARE valid_club INT DEFAULT 0;
     DECLARE starter_count INT DEFAULT 0;
+    DECLARE squad_count INT DEFAULT 0;
+    DECLARE contract_count INT DEFAULT 0;
+    DECLARE match_date DATE;
+    DECLARE loan_count INT DEFAULT 0;
+    DECLARE perm_count INT DEFAULT 0;
 
+    -- 1. Cannot add players to a completed match
+    SELECT COUNT(*) INTO match_completed
+    FROM `Match`
+    WHERE match_id = NEW.match_id
+      AND home_goals IS NOT NULL;
+
+    IF match_completed > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Cannot modify squad for a match that already has results.';
+    END IF;
+
+    -- 2. Club must be home or away in the match
+    SELECT COUNT(*) INTO valid_club
+    FROM `Match`
+    WHERE match_id = NEW.match_id
+      AND (home_club_id = NEW.club_id OR away_club_id = NEW.club_id);
+
+    IF valid_club = 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Club is not participating in this match.';
+    END IF;
+
+    -- 3. Max 11 starters per club per match
     IF NEW.is_starter = TRUE THEN
         SELECT COUNT(*) INTO starter_count
         FROM Match_Participation
@@ -109,17 +201,8 @@ BEGIN
                 SET MESSAGE_TEXT = 'Cannot have more than 11 starters per club per match.';
         END IF;
     END IF;
-END//
 
--- ================================================================
--- 4. Match Participation: max 23 squad members per club per match
--- ================================================================
-CREATE TRIGGER trg_check_squad_max
-BEFORE INSERT ON Match_Participation
-FOR EACH ROW
-BEGIN
-    DECLARE squad_count INT DEFAULT 0;
-
+    -- 4. Max 23 squad members per club per match
     SELECT COUNT(*) INTO squad_count
     FROM Match_Participation
     WHERE match_id = NEW.match_id
@@ -129,18 +212,8 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Squad cannot exceed 23 players per club per match.';
     END IF;
-END//
 
--- ================================================================
--- 5. Match Participation: player must have active contract with club
--- ================================================================
-CREATE TRIGGER trg_check_player_active_contract
-BEFORE INSERT ON Match_Participation
-FOR EACH ROW
-BEGIN
-    DECLARE contract_count INT DEFAULT 0;
-    DECLARE match_date     DATE;
-
+    -- 5. Player must have active contract with the club on match date
     SELECT DATE(match_datetime) INTO match_date
     FROM `Match`
     WHERE match_id = NEW.match_id;
@@ -156,24 +229,8 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Player does not have an active contract with this club on the match date.';
     END IF;
-END//
 
--- ================================================================
--- 6. Match Participation: player on loan cannot play for parent club
--- ================================================================
-CREATE TRIGGER trg_check_loan_restriction
-BEFORE INSERT ON Match_Participation
-FOR EACH ROW
-BEGIN
-    DECLARE loan_count INT DEFAULT 0;
-    DECLARE perm_count INT DEFAULT 0;
-    DECLARE match_date DATE;
-
-    SELECT DATE(match_datetime) INTO match_date
-    FROM `Match`
-    WHERE match_id = NEW.match_id;
-
-    -- Does the player have an active loan with a DIFFERENT club?
+    -- 6. Player on loan cannot play for parent club
     SELECT COUNT(*) INTO loan_count
     FROM Contract c
     JOIN Loan_Contract lc ON lc.contract_id = c.contract_id
@@ -183,7 +240,6 @@ BEGIN
       AND c.end_date   >= match_date;
 
     IF loan_count > 0 THEN
-        -- Is the club they're trying to play for their permanent club?
         SELECT COUNT(*) INTO perm_count
         FROM Contract c
         JOIN Permanent_Contract pc ON pc.contract_id = c.contract_id
@@ -197,17 +253,41 @@ BEGIN
                 SET MESSAGE_TEXT = 'Player currently on loan cannot participate for their parent club.';
         END IF;
     END IF;
+
+    -- 7. Two yellow cards => automatic red card
+    IF NEW.yellow_cards >= 2 AND NEW.red_cards = 0 THEN
+        SET NEW.red_cards = 1;
+    END IF;
 END//
 
 -- ================================================================
--- 7. Contract: max 2 active contracts (1 permanent + 1 loan)
+-- MATCH_PARTICIPATION — BEFORE UPDATE
+--   1. Two yellow cards => automatic red card
 -- ================================================================
-CREATE TRIGGER trg_check_contract_max_active
+CREATE TRIGGER trg_participation_before_update
+BEFORE UPDATE ON Match_Participation
+FOR EACH ROW
+BEGIN
+    IF NEW.yellow_cards >= 2 AND NEW.red_cards = 0 THEN
+        SET NEW.red_cards = 1;
+    END IF;
+END//
+
+-- ================================================================
+-- CONTRACT — BEFORE INSERT
+--   1. Force start_date = CURDATE()
+--   2. Max 2 active contracts per player (1 permanent + 1 loan)
+-- ================================================================
+CREATE TRIGGER trg_contract_before_insert
 BEFORE INSERT ON Contract
 FOR EACH ROW
 BEGIN
     DECLARE active_count INT DEFAULT 0;
 
+    -- 1. Contract start date must always be the current system date
+    SET NEW.start_date = CURDATE();
+
+    -- 2. Max 2 active contracts
     SELECT COUNT(*) INTO active_count
     FROM Contract
     WHERE player_id = NEW.player_id
@@ -221,16 +301,28 @@ BEGIN
 END//
 
 -- ================================================================
--- 7b. Permanent Contract: prevent two simultaneous permanent contracts
+-- PERMANENT_CONTRACT — BEFORE INSERT
+--   1. Contract cannot also be a Loan Contract (ISA disjointness)
+--   2. No two simultaneous permanent contracts
 -- ================================================================
-CREATE TRIGGER trg_check_no_duplicate_perm
+CREATE TRIGGER trg_permanent_contract_before_insert
 BEFORE INSERT ON Permanent_Contract
 FOR EACH ROW
 BEGIN
+    DECLARE cnt INT DEFAULT 0;
     DECLARE perm_count INT DEFAULT 0;
     DECLARE new_player INT;
     DECLARE new_start  DATE;
 
+    -- 1. ISA disjointness
+    SELECT COUNT(*) INTO cnt
+    FROM Loan_Contract WHERE contract_id = NEW.contract_id;
+    IF cnt > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'This contract is already a Loan Contract and cannot also be a Permanent Contract.';
+    END IF;
+
+    -- 2. No duplicate active permanent
     SELECT player_id, start_date INTO new_player, new_start
     FROM Contract WHERE contract_id = NEW.contract_id;
 
@@ -248,19 +340,35 @@ BEGIN
 END//
 
 -- ================================================================
--- 7c. Loan Contract: prevent two simultaneous loan contracts
+-- LOAN_CONTRACT — BEFORE INSERT
+--   1. Contract cannot also be a Permanent Contract (ISA disjointness)
+--   2. No two simultaneous loan contracts
+--   3. Player must have active permanent contract at another club
 -- ================================================================
-CREATE TRIGGER trg_check_no_duplicate_loan
+CREATE TRIGGER trg_loan_contract_before_insert
 BEFORE INSERT ON Loan_Contract
 FOR EACH ROW
 BEGIN
+    DECLARE cnt INT DEFAULT 0;
     DECLARE loan_count INT DEFAULT 0;
+    DECLARE perm_count INT DEFAULT 0;
     DECLARE new_player INT;
     DECLARE new_start  DATE;
+    DECLARE contract_club INT;
 
-    SELECT player_id, start_date INTO new_player, new_start
+    -- 1. ISA disjointness
+    SELECT COUNT(*) INTO cnt
+    FROM Permanent_Contract WHERE contract_id = NEW.contract_id;
+    IF cnt > 0 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'This contract is already a Permanent Contract and cannot also be a Loan Contract.';
+    END IF;
+
+    -- Get contract details
+    SELECT player_id, start_date, club_id INTO new_player, new_start, contract_club
     FROM Contract WHERE contract_id = NEW.contract_id;
 
+    -- 2. No duplicate active loan
     SELECT COUNT(*) INTO loan_count
     FROM Contract c
     JOIN Loan_Contract lc ON lc.contract_id = c.contract_id
@@ -272,32 +380,15 @@ BEGIN
         SIGNAL SQLSTATE '45000'
             SET MESSAGE_TEXT = 'Player already has an active loan contract.';
     END IF;
-END//
 
--- ================================================================
--- 8. Loan contract: player must have active permanent contract elsewhere
--- ================================================================
-CREATE TRIGGER trg_check_loan_requires_permanent
-BEFORE INSERT ON Loan_Contract
-FOR EACH ROW
-BEGIN
-    DECLARE perm_count INT DEFAULT 0;
-    DECLARE contract_start DATE;
-    DECLARE contract_club INT;
-
-    -- Get contract details
-    SELECT start_date, club_id INTO contract_start, contract_club
-    FROM Contract
-    WHERE contract_id = NEW.contract_id;
-
-    -- Check for active permanent contract with a DIFFERENT club
+    -- 3. Must have active permanent contract at a DIFFERENT club
     SELECT COUNT(*) INTO perm_count
     FROM Contract c
     JOIN Permanent_Contract pc ON pc.contract_id = c.contract_id
-    WHERE c.player_id = (SELECT player_id FROM Contract WHERE contract_id = NEW.contract_id)
+    WHERE c.player_id = new_player
       AND c.club_id != contract_club
-      AND c.start_date <= contract_start
-      AND c.end_date   >= contract_start;
+      AND c.start_date <= new_start
+      AND c.end_date   >= new_start;
 
     IF perm_count = 0 THEN
         SIGNAL SQLSTATE '45000'
@@ -306,10 +397,10 @@ BEGIN
 END//
 
 -- ================================================================
--- 9. Competition: unique (name, season) — backup trigger
---    (also enforced by UNIQUE constraint in schema)
+-- COMPETITION — BEFORE INSERT
+--   1. Unique (name, season) — backup trigger for UNIQUE constraint
 -- ================================================================
-CREATE TRIGGER trg_check_competition_unique
+CREATE TRIGGER trg_competition_before_insert
 BEFORE INSERT ON Competition
 FOR EACH ROW
 BEGIN
@@ -326,9 +417,10 @@ BEGIN
 END//
 
 -- ================================================================
--- 10. ISA Disjointness: Player cannot also be Manager or Referee
+-- PLAYER — BEFORE INSERT
+--   1. ISA Disjointness: cannot also be Manager or Referee
 -- ================================================================
-CREATE TRIGGER trg_check_player_disjoint
+CREATE TRIGGER trg_player_before_insert
 BEFORE INSERT ON Player
 FOR EACH ROW
 BEGIN
@@ -350,9 +442,10 @@ BEGIN
 END//
 
 -- ================================================================
--- 10b. ISA Disjointness: Manager cannot also be Player or Referee
+-- MANAGER — BEFORE INSERT
+--   1. ISA Disjointness: cannot also be Player or Referee
 -- ================================================================
-CREATE TRIGGER trg_check_manager_disjoint
+CREATE TRIGGER trg_manager_before_insert
 BEFORE INSERT ON Manager
 FOR EACH ROW
 BEGIN
@@ -374,9 +467,10 @@ BEGIN
 END//
 
 -- ================================================================
--- 10c. ISA Disjointness: Referee cannot also be Player or Manager
+-- REFEREE — BEFORE INSERT
+--   1. ISA Disjointness: cannot also be Player or Manager
 -- ================================================================
-CREATE TRIGGER trg_check_referee_disjoint
+CREATE TRIGGER trg_referee_before_insert
 BEFORE INSERT ON Referee
 FOR EACH ROW
 BEGIN
@@ -398,54 +492,45 @@ BEGIN
 END//
 
 -- ================================================================
--- 11. ISA Disjointness: Contract cannot be both Permanent and Loan
+-- TRANSFER_RECORD — BEFORE INSERT
+--   1. Force transfer_date = CURDATE()
+--   2. Player must have active contract with the source club
 -- ================================================================
-CREATE TRIGGER trg_check_contract_disjoint_perm
-BEFORE INSERT ON Permanent_Contract
+CREATE TRIGGER trg_transfer_before_insert
+BEFORE INSERT ON Transfer_Record
 FOR EACH ROW
 BEGIN
-    DECLARE cnt INT DEFAULT 0;
+    DECLARE contract_count INT DEFAULT 0;
 
-    SELECT COUNT(*) INTO cnt
-    FROM Loan_Contract WHERE contract_id = NEW.contract_id;
-    IF cnt > 0 THEN
+    -- 1. Transfer date must always be the current system date
+    SET NEW.transfer_date = CURDATE();
+
+    -- 2. Player must have active contract with source club
+    SELECT COUNT(*) INTO contract_count
+    FROM Contract
+    WHERE player_id  = NEW.player_id
+      AND club_id    = NEW.from_club_id
+      AND start_date <= NEW.transfer_date
+      AND end_date   >= NEW.transfer_date;
+
+    IF contract_count = 0 THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'This contract is already a Loan Contract and cannot also be a Permanent Contract.';
-    END IF;
-END//
-
-CREATE TRIGGER trg_check_contract_disjoint_loan
-BEFORE INSERT ON Loan_Contract
-FOR EACH ROW
-BEGIN
-    DECLARE cnt INT DEFAULT 0;
-
-    SELECT COUNT(*) INTO cnt
-    FROM Permanent_Contract WHERE contract_id = NEW.contract_id;
-    IF cnt > 0 THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'This contract is already a Permanent Contract and cannot also be a Loan Contract.';
+            SET MESSAGE_TEXT = 'Player does not have an active contract with the source club.';
     END IF;
 END//
 
 -- ================================================================
--- 12. Two yellow cards automatically imply a red card
+-- TRANSFER_RECORD — AFTER INSERT
+--   1. Purchase transfer: auto-update player market value to fee
 -- ================================================================
-CREATE TRIGGER trg_check_yellow_red_card
-BEFORE INSERT ON Match_Participation
+CREATE TRIGGER trg_transfer_after_insert
+AFTER INSERT ON Transfer_Record
 FOR EACH ROW
 BEGIN
-    IF NEW.yellow_cards >= 2 AND NEW.red_cards = 0 THEN
-        SET NEW.red_cards = 1;
-    END IF;
-END//
-
-CREATE TRIGGER trg_check_yellow_red_card_update
-BEFORE UPDATE ON Match_Participation
-FOR EACH ROW
-BEGIN
-    IF NEW.yellow_cards >= 2 AND NEW.red_cards = 0 THEN
-        SET NEW.red_cards = 1;
+    IF NEW.transfer_type = 'Purchase' THEN
+        UPDATE Player
+        SET market_value = NEW.transfer_fee
+        WHERE person_id = NEW.player_id;
     END IF;
 END//
 

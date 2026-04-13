@@ -3,20 +3,18 @@
 {% block content %}
 <h1>My Officiating Statistics</h1>
 
-<div class="card">
-  <div class="profile-grid">
-    <div class="profile-item">
-      <div class="profile-label">Matches Officiated</div>
-      <div class="profile-value">{{ stats.matches_officiated or 0 }}</div>
-    </div>
-    <div class="profile-item">
-      <div class="profile-label">Total Yellow Cards Issued</div>
-      <div class="profile-value">{{ stats.total_yellow or 0 }}</div>
-    </div>
-    <div class="profile-item">
-      <div class="profile-label">Total Red Cards Issued</div>
-      <div class="profile-value">{{ stats.total_red or 0 }}</div>
-    </div>
+<div class="dashboard-grid">
+  <div class="stat-box">
+    <div class="stat-num">{{ stats.matches_officiated or 0 }}</div>
+    <div class="stat-label">Matches Officiated</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-num">{{ stats.total_yellow or 0 }}</div>
+    <div class="stat-label">Yellow Cards Issued</div>
+  </div>
+  <div class="stat-box">
+    <div class="stat-num">{{ stats.total_red or 0 }}</div>
+    <div class="stat-label">Red Cards Issued</div>
   </div>
 </div>
 {% endblock %}

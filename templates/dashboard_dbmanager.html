@@ -6,30 +6,30 @@
   <p>Welcome, <strong>{{ session.username }}</strong>. You have full administrative access.</p>
 </div>
 
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:16px">
-  <a href="{{ url_for('dbmanager_stadiums') }}" class="card" style="text-decoration:none;color:inherit">
-    <h3 style="margin-top:0">View Stadiums</h3>
-    <p style="font-size:14px;color:#555">View and rename stadiums</p>
+<div class="dashboard-grid">
+  <a href="{{ url_for('dbmanager_stadiums') }}" class="card">
+    <h3>View Stadiums</h3>
+    <p style="font-size:13px;color:#666">View and rename stadiums</p>
   </a>
-  <a href="{{ url_for('dbmanager_schedule_match') }}" class="card" style="text-decoration:none;color:inherit">
-    <h3 style="margin-top:0">Schedule Match</h3>
-    <p style="font-size:14px;color:#555">Schedule a new match</p>
+  <a href="{{ url_for('dbmanager_schedule_match') }}" class="card">
+    <h3>Schedule Match</h3>
+    <p style="font-size:13px;color:#666">Schedule a new match</p>
   </a>
-  <a href="{{ url_for('dbmanager_transfer') }}" class="card" style="text-decoration:none;color:inherit">
-    <h3 style="margin-top:0">Register Transfer</h3>
-    <p style="font-size:14px;color:#555">Transfer players and create contracts</p>
+  <a href="{{ url_for('dbmanager_transfer') }}" class="card">
+    <h3>Register Transfer</h3>
+    <p style="font-size:13px;color:#666">Transfer players and create contracts</p>
   </a>
-  <a href="{{ url_for('dbmanager_assign_manager') }}" class="card" style="text-decoration:none;color:inherit">
-    <h3 style="margin-top:0">Assign Manager</h3>
-    <p style="font-size:14px;color:#555">Assign managers to clubs</p>
+  <a href="{{ url_for('dbmanager_assign_manager') }}" class="card">
+    <h3>Assign Manager</h3>
+    <p style="font-size:13px;color:#666">Assign managers to clubs</p>
   </a>
-  <a href="{{ url_for('dbmanager_create_competition') }}" class="card" style="text-decoration:none;color:inherit">
-    <h3 style="margin-top:0">Create Competition</h3>
-    <p style="font-size:14px;color:#555">Add a new competition</p>
+  <a href="{{ url_for('dbmanager_create_competition') }}" class="card">
+    <h3>Create Competition</h3>
+    <p style="font-size:13px;color:#666">Add a new competition</p>
   </a>
-  <a href="{{ url_for('dbmanager_create_user') }}" class="card" style="text-decoration:none;color:inherit">
-    <h3 style="margin-top:0">Create User</h3>
-    <p style="font-size:14px;color:#555">Add players, managers, or referees</p>
+  <a href="{{ url_for('dbmanager_create_user') }}" class="card">
+    <h3>Create User</h3>
+    <p style="font-size:13px;color:#666">Add players, managers, or referees</p>
   </a>
 </div>
 {% endblock %}
