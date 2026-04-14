@@ -99,6 +99,15 @@ BEGIN
     DECLARE home_squad INT DEFAULT 0;
     DECLARE away_squad INT DEFAULT 0;
 
+    -- 0. Only the assigned referee can submit results
+    IF (NEW.home_goals IS NOT NULL OR NEW.away_goals IS NOT NULL OR NEW.attendance IS NOT NULL)
+       AND (OLD.home_goals IS NULL AND OLD.away_goals IS NULL AND OLD.attendance IS NULL) THEN
+        IF @app_person_id IS NOT NULL AND OLD.referee_id != @app_person_id THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Only the assigned referee can submit match results.';
+        END IF;
+    END IF;
+
     -- 1. Attendance <= stadium capacity
     IF NEW.attendance IS NOT NULL THEN
         SELECT capacity INTO cap
@@ -152,6 +161,8 @@ END//
 --   5. Player must have active contract with the club
 --   6. Player on loan cannot play for parent club
 --   7. Two yellow cards => automatic red card
+--   8. Red card in previous club match => suspended
+--   9. 5 accumulated yellow cards in competition/season => suspended
 -- ================================================================
 CREATE TRIGGER trg_participation_before_insert
 BEFORE INSERT ON Match_Participation
@@ -165,6 +176,10 @@ BEGIN
     DECLARE match_date DATE;
     DECLARE loan_count INT DEFAULT 0;
     DECLARE perm_count INT DEFAULT 0;
+    DECLARE comp_id INT DEFAULT 0;
+    DECLARE prev_match_id INT DEFAULT NULL;
+    DECLARE prev_red INT DEFAULT 0;
+    DECLARE yellow_total INT DEFAULT 0;
 
     -- 1. Cannot add players to a completed match
     SELECT COUNT(*) INTO match_completed
@@ -257,6 +272,47 @@ BEGIN
     -- 7. Two yellow cards => automatic red card
     IF NEW.yellow_cards >= 2 AND NEW.red_cards = 0 THEN
         SET NEW.red_cards = 1;
+    END IF;
+
+    -- Fetch competition_id once for checks 8 and 9
+    SELECT competition_id INTO comp_id
+    FROM `Match` WHERE match_id = NEW.match_id;
+
+    -- 8. Red card suspension: player got a red card in club's previous match in this competition
+    SELECT m.match_id INTO prev_match_id
+    FROM `Match` m
+    WHERE m.competition_id = comp_id
+      AND (m.home_club_id = NEW.club_id OR m.away_club_id = NEW.club_id)
+      AND m.match_datetime < (SELECT match_datetime FROM `Match` WHERE match_id = NEW.match_id)
+      AND m.home_goals IS NOT NULL
+    ORDER BY m.match_datetime DESC
+    LIMIT 1;
+
+    IF prev_match_id IS NOT NULL THEN
+        SELECT COUNT(*) INTO prev_red
+        FROM Match_Participation
+        WHERE match_id  = prev_match_id
+          AND player_id = NEW.player_id
+          AND red_cards > 0;
+
+        IF prev_red > 0 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Player is suspended: received a red card in the previous match of this competition.';
+        END IF;
+    END IF;
+
+    -- 9. Yellow card accumulation: 5 yellows in same competition/season => suspended for next match
+    SELECT COALESCE(SUM(mp.yellow_cards), 0) INTO yellow_total
+    FROM Match_Participation mp
+    JOIN `Match` m ON m.match_id = mp.match_id
+    WHERE mp.player_id    = NEW.player_id
+      AND m.competition_id = comp_id
+      AND m.match_datetime < (SELECT match_datetime FROM `Match` WHERE match_id = NEW.match_id)
+      AND m.home_goals IS NOT NULL;
+
+    IF yellow_total >= 5 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Player is suspended: accumulated 5 yellow cards in this competition and season.';
     END IF;
 END//
 

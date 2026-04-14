@@ -40,10 +40,9 @@
     <table style="min-width:900px">
       <thead>
         <tr>
-          <th>Played</th>
           <th>Name</th>
-          <th>Position</th>
           <th>Starter</th>
+          <th>Position</th>
           <th>Minutes</th>
           <th>Goals</th>
           <th>Assists</th>
@@ -56,49 +55,42 @@
         {% for p in players %}
         {% set key = 'p_' ~ p.person_id %}
         <tr>
-          <td style="text-align:center">
-            <input type="checkbox" name="{{ key }}_played" id="{{ key }}_played" value="on"
-                   onchange="toggleRow('{{ key }}', this.checked)">
-          </td>
           <td>{{ p.name }} {{ p.surname }}</td>
+          <td style="text-align:center">{{ 'Yes' if p.is_starter else 'No' }}</td>
           <td>
             <input type="text" name="{{ key }}_position"
-                   value="{{ p.main_position }}"
-                   style="width:120px" disabled id="{{ key }}_position_input">
-          </td>
-          <td style="text-align:center">
-            <input type="checkbox" name="{{ key }}_starter" value="on"
-                   disabled id="{{ key }}_starter_input">
+                   value="{{ p.position_in_match or p.main_position }}"
+                   style="width:120px">
           </td>
           <td>
             <input type="number" name="{{ key }}_minutes"
-                   min="0" max="120" value="90"
-                   style="width:70px" disabled id="{{ key }}_minutes_input">
+                   min="0" max="120" value="{{ p.minutes_played or 90 }}"
+                   style="width:70px">
           </td>
           <td>
             <input type="number" name="{{ key }}_goals"
-                   min="0" value="0"
-                   style="width:60px" disabled id="{{ key }}_goals_input">
+                   min="0" value="{{ p.goals or 0 }}"
+                   style="width:60px">
           </td>
           <td>
             <input type="number" name="{{ key }}_assists"
-                   min="0" value="0"
-                   style="width:60px" disabled id="{{ key }}_assists_input">
+                   min="0" value="{{ p.assists or 0 }}"
+                   style="width:60px">
           </td>
           <td>
             <input type="number" name="{{ key }}_yellow"
-                   min="0" max="2" value="0"
-                   style="width:60px" disabled id="{{ key }}_yellow_input">
+                   min="0" max="2" value="{{ p.yellow_cards or 0 }}"
+                   style="width:60px">
           </td>
           <td>
             <input type="number" name="{{ key }}_red"
-                   min="0" max="1" value="0"
-                   style="width:60px" disabled id="{{ key }}_red_input">
+                   min="0" max="1" value="{{ p.red_cards or 0 }}"
+                   style="width:60px">
           </td>
           <td>
             <input type="number" name="{{ key }}_rating"
-                   min="1.0" max="10.0" step="0.1" value="7.0"
-                   style="width:70px" disabled id="{{ key }}_rating_input">
+                   min="1.0" max="10.0" step="0.1" value="{{ p.rating or 7.0 }}"
+                   style="width:70px">
           </td>
         </tr>
         {% endfor %}
@@ -106,7 +98,7 @@
     </table>
     </div>
     {% else %}
-    <p>No eligible players found for this club on the match date.</p>
+    <p>No squad submitted for this club yet.</p>
     {% endif %}
   </div>
   {% endmacro %}
@@ -119,15 +111,4 @@
     <a href="{{ url_for('referee.referee_matches') }}" class="btn btn-secondary">Cancel</a>
   </div>
 </form>
-
-<script>
-function toggleRow(key, enabled) {
-  var fields = ['position_input','starter_input','minutes_input',
-                'goals_input','assists_input','yellow_input','red_input','rating_input'];
-  fields.forEach(function(f) {
-    var el = document.getElementById(key + '_' + f);
-    if (el) el.disabled = !enabled;
-  });
-}
-</script>
 {% endblock %}

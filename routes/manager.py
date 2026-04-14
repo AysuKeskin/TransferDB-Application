@@ -124,9 +124,18 @@ def manager_squad(match_id):
                AND c.club_id = %s
                AND c.start_date <= DATE(%s)
                AND c.end_date   >= DATE(%s)
+           WHERE NOT EXISTS (
+               SELECT 1 FROM Contract lc
+               JOIN Loan_Contract ON Loan_Contract.contract_id = lc.contract_id
+               WHERE lc.player_id = p.person_id
+                 AND lc.club_id != %s
+                 AND lc.start_date <= DATE(%s)
+                 AND lc.end_date   >= DATE(%s)
+           )
            GROUP BY p.person_id, p.name, p.surname, pl.main_position
            ORDER BY pl.main_position, p.surname''',
-        (club_id, match['match_datetime'], match['match_datetime'])
+        (club_id, match['match_datetime'], match['match_datetime'],
+         club_id, match['match_datetime'], match['match_datetime'])
     )
 
     existing = execute_read(

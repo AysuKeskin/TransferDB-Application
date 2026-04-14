@@ -76,16 +76,15 @@ def referee_submit(match_id):
 
     def get_club_players(club_id):
         return execute_read(
-            '''SELECT p.person_id, p.name, p.surname, pl.main_position
-               FROM Person p
-               JOIN Player pl ON p.person_id = pl.person_id
-               JOIN Contract c ON c.player_id = p.person_id
-                   AND c.club_id = %s
-                   AND c.start_date <= DATE(%s)
-                   AND c.end_date   >= DATE(%s)
-               GROUP BY p.person_id, p.name, p.surname, pl.main_position
-               ORDER BY pl.main_position, p.surname''',
-            (club_id, match['match_datetime'], match['match_datetime'])
+            '''SELECT mp.player_id AS person_id, p.name, p.surname, pl.main_position,
+                      mp.is_starter, mp.minutes_played, mp.position_in_match,
+                      mp.goals, mp.assists, mp.yellow_cards, mp.red_cards, mp.rating
+               FROM Match_Participation mp
+               JOIN Person p ON p.person_id = mp.player_id
+               JOIN Player pl ON pl.person_id = mp.player_id
+               WHERE mp.match_id = %s AND mp.club_id = %s
+               ORDER BY mp.is_starter DESC, pl.main_position, p.surname''',
+            (match_id, club_id)
         )
 
     home_players = get_club_players(match['home_club_id'])
@@ -112,21 +111,12 @@ def referee_submit(match_id):
         conn = get_db()
         try:
             with conn.cursor() as cur:
-                # Process player stats FIRST (before marking match completed,
-                # since DB trigger blocks participation inserts on completed matches)
+                # Update stats for each squad player
                 for club_id in [match['home_club_id'], match['away_club_id']]:
                     players = home_players if club_id == match['home_club_id'] else away_players
                     for pl in players:
                         player_id = pl['person_id']
                         key = f'p_{player_id}'
-                        if f.get(f'{key}_played') != 'on':
-                            cur.execute(
-                                'DELETE FROM Match_Participation WHERE match_id=%s AND player_id=%s',
-                                (match_id, player_id)
-                            )
-                            continue
-
-                        is_starter = f.get(f'{key}_starter') == 'on'
                         try:
                             minutes = int(f.get(f'{key}_minutes', 0))
                             goals = int(f.get(f'{key}_goals', 0))
@@ -134,6 +124,7 @@ def referee_submit(match_id):
                             yellow = int(f.get(f'{key}_yellow', 0))
                             red = int(f.get(f'{key}_red', 0))
                             rating = float(f.get(f'{key}_rating', 5.0))
+                            position = f.get(f'{key}_position', pl['main_position'])
                         except (ValueError, TypeError):
                             flash(f'Invalid stats for player {pl["name"]} {pl["surname"]}.', 'error')
                             conn.rollback()
@@ -141,32 +132,20 @@ def referee_submit(match_id):
                                                    match=match, home_players=home_players,
                                                    away_players=away_players)
 
-                        position = f.get(f'{key}_position', pl['main_position'])
-
                         cur.execute(
-                            '''INSERT INTO Match_Participation
-                               (match_id, player_id, club_id, is_starter,
-                                minutes_played, position_in_match,
-                                goals, assists, yellow_cards, red_cards, rating)
-                               VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-                               ON DUPLICATE KEY UPDATE
-                                   is_starter       = VALUES(is_starter),
-                                   minutes_played   = VALUES(minutes_played),
-                                   position_in_match = VALUES(position_in_match),
-                                   goals            = VALUES(goals),
-                                   assists          = VALUES(assists),
-                                   yellow_cards     = VALUES(yellow_cards),
-                                   red_cards        = VALUES(red_cards),
-                                   rating           = VALUES(rating)''',
-                            (match_id, player_id, club_id, is_starter,
-                             minutes, position, goals, assists, yellow, red, rating)
+                            '''UPDATE Match_Participation
+                               SET minutes_played=%s, position_in_match=%s,
+                                   goals=%s, assists=%s, yellow_cards=%s, red_cards=%s, rating=%s
+                               WHERE match_id=%s AND player_id=%s AND club_id=%s''',
+                            (minutes, position, goals, assists,
+                             yellow, red, rating, match_id, player_id, club_id)
                         )
 
-                # Update match score LAST (trigger checks attendance <= capacity)
+                # Set session variable for DB-level referee enforcement, then update match result
+                cur.execute('SET @app_person_id = %s', (pid,))
                 cur.execute(
                     '''UPDATE `Match`
-                       SET home_goals = %s, away_goals = %s,
-                           attendance = %s
+                       SET home_goals = %s, away_goals = %s, attendance = %s
                        WHERE match_id = %s''',
                     (home_goals, away_goals, attendance, match_id)
                 )
