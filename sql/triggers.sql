@@ -562,16 +562,33 @@ BEGIN
     SET NEW.transfer_date = CURDATE();
 
     -- 2. Player must have active contract with source club
-    SELECT COUNT(*) INTO contract_count
-    FROM Contract
-    WHERE player_id  = NEW.player_id
-      AND club_id    = NEW.from_club_id
-      AND start_date <= NEW.transfer_date
-      AND end_date   >= NEW.transfer_date;
+    --    For Loan transfers: must specifically be a Permanent contract (parent club check)
+    --    For Free/Purchase transfers: any active contract is sufficient
+    IF NEW.transfer_type = 'Loan' THEN
+        SELECT COUNT(*) INTO contract_count
+        FROM Contract c
+        JOIN Permanent_Contract pc ON pc.contract_id = c.contract_id
+        WHERE c.player_id  = NEW.player_id
+          AND c.club_id    = NEW.from_club_id
+          AND c.start_date <= NEW.transfer_date
+          AND c.end_date   >= NEW.transfer_date;
 
-    IF contract_count = 0 THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Player does not have an active contract with the source club.';
+        IF contract_count = 0 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'For a Loan transfer, the source club must be the player''s parent club (permanent contract).';
+        END IF;
+    ELSE
+        SELECT COUNT(*) INTO contract_count
+        FROM Contract
+        WHERE player_id  = NEW.player_id
+          AND club_id    = NEW.from_club_id
+          AND start_date <= NEW.transfer_date
+          AND end_date   >= NEW.transfer_date;
+
+        IF contract_count = 0 THEN
+            SIGNAL SQLSTATE '45000'
+                SET MESSAGE_TEXT = 'Player does not have an active contract with the source club.';
+        END IF;
     END IF;
 END//
 
