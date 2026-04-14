@@ -58,37 +58,37 @@
 <body>
 {% if session.username %}
 <nav>
-  <a href="{{ url_for('dashboard') }}"><strong>TransferDB</strong></a>
+  <a href="{{ url_for('auth.dashboard') }}"><strong>TransferDB</strong></a>
   {% if session.role == 'player' %}
-    <a href="{{ url_for('player_profile') }}">Profile</a>
-    <a href="{{ url_for('player_stats') }}">My Stats</a>
-    <a href="{{ url_for('player_matches') }}">Match History</a>
-    <a href="{{ url_for('player_career') }}">Career History</a>
+    <a href="{{ url_for('player.player_profile') }}">Profile</a>
+    <a href="{{ url_for('player.player_stats') }}">My Stats</a>
+    <a href="{{ url_for('player.player_matches') }}">Match History</a>
+    <a href="{{ url_for('player.player_career') }}">Career History</a>
   {% elif session.role == 'manager' %}
-    <a href="{{ url_for('manager_profile') }}">Profile</a>
-    <a href="{{ url_for('manager_fixtures') }}">Fixtures</a>
-    <a href="{{ url_for('manager_standings') }}">Standings</a>
-    <a href="{{ url_for('manager_squad_stats') }}">Squad Stats</a>
-    <a href="{{ url_for('manager_leaderboard') }}">Leaderboard</a>
+    <a href="{{ url_for('manager.manager_profile') }}">Profile</a>
+    <a href="{{ url_for('manager.manager_fixtures') }}">Fixtures</a>
+    <a href="{{ url_for('manager.manager_standings') }}">Standings</a>
+    <a href="{{ url_for('manager.manager_squad_stats') }}">Squad Stats</a>
+    <a href="{{ url_for('manager.manager_leaderboard') }}">Leaderboard</a>
   {% elif session.role == 'referee' %}
-    <a href="{{ url_for('referee_profile') }}">Profile</a>
-    <a href="{{ url_for('referee_stats') }}">My Stats</a>
-    <a href="{{ url_for('referee_history') }}">Match History</a>
-    <a href="{{ url_for('referee_matches') }}">Submit Results</a>
+    <a href="{{ url_for('referee.referee_profile') }}">Profile</a>
+    <a href="{{ url_for('referee.referee_stats') }}">My Stats</a>
+    <a href="{{ url_for('referee.referee_history') }}">Match History</a>
+    <a href="{{ url_for('referee.referee_matches') }}">Submit Results</a>
   {% elif session.role == 'db_manager' %}
-    <a href="{{ url_for('dbmanager_dashboard') }}">Dashboard</a>
-    <a href="{{ url_for('dbmanager_stadiums') }}">Stadiums</a>
-    <a href="{{ url_for('dbmanager_schedule_match') }}">Schedule Match</a>
-    <a href="{{ url_for('dbmanager_transfer') }}">Transfer</a>
-    <a href="{{ url_for('dbmanager_assign_manager') }}">Assign Manager</a>
-    <a href="{{ url_for('dbmanager_create_competition') }}">New Competition</a>
-    <a href="{{ url_for('dbmanager_create_user') }}">Create User</a>
+    <a href="{{ url_for('dbmanager.dbmanager_dashboard') }}">Dashboard</a>
+    <a href="{{ url_for('dbmanager.dbmanager_stadiums') }}">Stadiums</a>
+    <a href="{{ url_for('dbmanager.dbmanager_schedule_match') }}">Schedule Match</a>
+    <a href="{{ url_for('dbmanager.dbmanager_transfer') }}">Transfer</a>
+    <a href="{{ url_for('dbmanager.dbmanager_assign_manager') }}">Assign Manager</a>
+    <a href="{{ url_for('dbmanager.dbmanager_create_competition') }}">New Competition</a>
+    <a href="{{ url_for('dbmanager.dbmanager_create_user') }}">Create User</a>
   {% endif %}
   <span class="nav-right">
     {{ session.username }}
     ({{ session.role.replace('_',' ').title() }})
     &nbsp;|&nbsp;
-    <a href="{{ url_for('logout') }}">Logout</a>
+    <a href="{{ url_for('auth.logout') }}">Logout</a>
   </span>
 </nav>
 {% endif %}

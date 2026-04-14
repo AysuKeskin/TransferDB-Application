@@ -36,8 +36,8 @@
 {% endif %}
 
 <div style="margin-top:20px;display:flex;gap:10px">
-  <a href="{{ url_for('referee_stats') }}" class="btn">My Statistics</a>
-  <a href="{{ url_for('referee_history') }}" class="btn">Match History</a>
-  <a href="{{ url_for('referee_matches') }}" class="btn">Submit Match Results</a>
+  <a href="{{ url_for('referee.referee_stats') }}" class="btn">My Statistics</a>
+  <a href="{{ url_for('referee.referee_history') }}" class="btn">Match History</a>
+  <a href="{{ url_for('referee.referee_matches') }}" class="btn">Submit Match Results</a>
 </div>
 {% endblock %}

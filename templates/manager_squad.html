@@ -11,7 +11,7 @@
 </div>
 
 {% if players %}
-<form method="POST" action="{{ url_for('manager_squad', match_id=match.match_id) }}">
+<form method="POST" action="{{ url_for('manager.manager_squad', match_id=match.match_id) }}">
   <p style="font-size:14px;color:#555">
     Select between <strong>11 and 23</strong> players.
     Mark up to <strong>11</strong> as starters.
@@ -50,7 +50,7 @@
   </table>
   <div style="margin-top:14px;display:flex;gap:10px">
     <button type="submit">Save Squad</button>
-    <a href="{{ url_for('manager_fixtures') }}" class="btn btn-secondary">Cancel</a>
+    <a href="{{ url_for('manager.manager_fixtures') }}" class="btn btn-secondary">Cancel</a>
   </div>
 </form>
 
@@ -75,5 +75,5 @@ document.querySelectorAll('input[name="player_ids"]').forEach(function(cb) {
 </div>
 {% endif %}
 
-<p><a href="{{ url_for('manager_fixtures') }}">&larr; Back to Fixtures</a></p>
+<p><a href="{{ url_for('manager.manager_fixtures') }}">&larr; Back to Fixtures</a></p>
 {% endblock %}

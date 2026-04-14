@@ -3,7 +3,7 @@
 {% block content %}
 <h1>Squad Statistics – {{ club.club_name }}</h1>
 
-<form method="GET" action="{{ url_for('manager_squad_stats') }}" class="filter-form">
+<form method="GET" action="{{ url_for('manager.manager_squad_stats') }}" class="filter-form">
   <div class="form-group">
     <label>Season</label>
     <select name="season" onchange="this.form.submit()">
@@ -29,7 +29,7 @@
   {% endif %}
   <div class="form-group" style="align-self:flex-end">
     <button type="submit">Filter</button>
-    <a href="{{ url_for('manager_squad_stats') }}" class="btn btn-secondary btn-sm" style="margin-left:6px">Reset</a>
+    <a href="{{ url_for('manager.manager_squad_stats') }}" class="btn btn-secondary btn-sm" style="margin-left:6px">Reset</a>
   </div>
 </form>
 

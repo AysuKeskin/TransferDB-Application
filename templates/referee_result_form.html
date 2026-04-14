@@ -11,7 +11,7 @@
   (Capacity: {{ '{:,}'.format(match.capacity) }})
 </div>
 
-<form method="POST" action="{{ url_for('referee_submit', match_id=match.match_id) }}">
+<form method="POST" action="{{ url_for('referee.referee_submit', match_id=match.match_id) }}">
   <div class="card">
     <h2 style="margin-top:0">Match Result</h2>
     <div style="display:flex;gap:20px;flex-wrap:wrap">
@@ -116,7 +116,7 @@
 
   <div style="margin-top:16px;display:flex;gap:10px">
     <button type="submit">Submit Result</button>
-    <a href="{{ url_for('referee_matches') }}" class="btn btn-secondary">Cancel</a>
+    <a href="{{ url_for('referee.referee_matches') }}" class="btn btn-secondary">Cancel</a>
   </div>
 </form>
 

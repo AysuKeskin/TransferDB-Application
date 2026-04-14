@@ -43,10 +43,10 @@
 <div class="flash-error">You are not currently assigned to any club. Contact a Database Manager.</div>
 {% else %}
 <div style="margin-top:20px;display:flex;gap:10px">
-  <a href="{{ url_for('manager_fixtures') }}" class="btn">Fixtures &amp; Results</a>
-  <a href="{{ url_for('manager_standings') }}" class="btn">League Standings</a>
-  <a href="{{ url_for('manager_squad_stats') }}" class="btn">Squad Statistics</a>
-  <a href="{{ url_for('manager_leaderboard') }}" class="btn">Leaderboard</a>
+  <a href="{{ url_for('manager.manager_fixtures') }}" class="btn">Fixtures &amp; Results</a>
+  <a href="{{ url_for('manager.manager_standings') }}" class="btn">League Standings</a>
+  <a href="{{ url_for('manager.manager_squad_stats') }}" class="btn">Squad Statistics</a>
+  <a href="{{ url_for('manager.manager_leaderboard') }}" class="btn">Leaderboard</a>
 </div>
 {% endif %}
 {% endblock %}

@@ -3,7 +3,7 @@
 {% block content %}
 <h1>League Standings</h1>
 
-<form method="GET" action="{{ url_for('manager_standings') }}" class="filter-form">
+<form method="GET" action="{{ url_for('manager.manager_standings') }}" class="filter-form">
   <div class="form-group">
     <label>Competition (League)</label>
     <select name="competition_id" onchange="this.form.submit()">

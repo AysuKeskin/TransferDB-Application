@@ -3,7 +3,7 @@
 {% block content %}
 <h1>Fixtures &amp; Results – {{ club.club_name }}</h1>
 
-<form method="GET" action="{{ url_for('manager_fixtures') }}" class="filter-form">
+<form method="GET" action="{{ url_for('manager.manager_fixtures') }}" class="filter-form">
   <div class="form-group">
     <label>Competition</label>
     <select name="competition_id">
@@ -22,7 +22,7 @@
   </div>
   <div class="form-group" style="align-self:flex-end">
     <button type="submit">Filter</button>
-    <a href="{{ url_for('manager_fixtures') }}" class="btn btn-secondary btn-sm" style="margin-left:6px">Reset</a>
+    <a href="{{ url_for('manager.manager_fixtures') }}" class="btn btn-secondary btn-sm" style="margin-left:6px">Reset</a>
   </div>
 </form>
 
@@ -68,7 +68,7 @@
       <td>{{ m.squad_submitted }} players</td>
       <td>
         {% if m.status == 'Scheduled' %}
-          <a href="{{ url_for('manager_squad', match_id=m.match_id) }}" class="btn btn-sm">
+          <a href="{{ url_for('manager.manager_squad', match_id=m.match_id) }}" class="btn btn-sm">
             {{ 'Update Squad' if m.squad_submitted > 0 else 'Submit Squad' }}
           </a>
         {% else %}

@@ -48,8 +48,8 @@
 {% endif %}
 
 <div style="margin-top:20px;display:flex;gap:10px">
-  <a href="{{ url_for('player_stats') }}" class="btn">View My Stats</a>
-  <a href="{{ url_for('player_matches') }}" class="btn">Match History</a>
-  <a href="{{ url_for('player_career') }}" class="btn">Career History</a>
+  <a href="{{ url_for('player.player_stats') }}" class="btn">View My Stats</a>
+  <a href="{{ url_for('player.player_matches') }}" class="btn">Match History</a>
+  <a href="{{ url_for('player.player_career') }}" class="btn">Career History</a>
 </div>
 {% endblock %}

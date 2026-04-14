@@ -22,7 +22,7 @@
       <td>{{ '{:,}'.format(s.capacity) }}</td>
       <td>{{ s.clubs or 'None' }}</td>
       <td>
-        <a href="{{ url_for('dbmanager_rename_stadium', stadium_id=s.stadium_id) }}"
+        <a href="{{ url_for('dbmanager.dbmanager_rename_stadium', stadium_id=s.stadium_id) }}"
            class="btn btn-sm">Rename</a>
       </td>
     </tr>
