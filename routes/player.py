@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, session
+from flask import Blueprint, render_template, request, session
 
 from db import execute_read, execute_read_one
 from utils import get_player_current_club, login_required, role_required
@@ -28,7 +28,6 @@ def player_profile():
 @role_required('player')
 def player_stats():
     pid = session['person_id']
-    from flask import request
     season = request.args.get('season', '').strip()
     comp_id = request.args.get('competition_id', '').strip()
 
