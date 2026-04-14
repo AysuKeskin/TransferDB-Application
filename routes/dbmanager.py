@@ -195,20 +195,21 @@ def dbmanager_transfer():
                         'INSERT INTO Permanent_Contract (contract_id) VALUES (%s)', (cid,)
                     )
                 else:
-                    # Loan: find the player's active permanent contract
+                    # Loan: find the player's active permanent contract at a different club
                     cur.execute(
                         '''SELECT pc.contract_id FROM Permanent_Contract pc
                            JOIN Contract c ON c.contract_id = pc.contract_id
                            WHERE c.player_id = %s
+                             AND c.club_id != %s
                              AND c.start_date <= CURDATE()
-                             AND c.end_date >= CURDATE()
+                             AND c.end_date > CURDATE()
                            LIMIT 1''',
-                        (player_id,)
+                        (player_id, dest_club_id)
                     )
                     perm_row = cur.fetchone()
                     if not perm_row:
                         conn.rollback()
-                        flash('Cannot create loan: player has no active permanent contract.', 'error')
+                        flash('Cannot create loan: player has no active permanent contract with another club.', 'error')
                         return render_template('dbmanager_transfer.html',
                                                players=players, clubs=clubs, form=f)
                     cur.execute(
@@ -216,20 +217,24 @@ def dbmanager_transfer():
                         (cid, perm_row['contract_id'])
                     )
 
-                # Create transfer record
-                cur.execute('SELECT COALESCE(MAX(transfer_id), 0) + 1 AS nid FROM Transfer_Record')
-                tid = cur.fetchone()['nid']
+                # Determine transfer type and enforce fee rules
+                if contract_type == 'Permanent':
+                    transfer_type = 'Free' if fee_val == 0 else 'Purchase'
+                else:
+                    transfer_type = 'Loan'
 
-                transfer_type = 'Purchase' if contract_type == 'Permanent' else 'Loan'
-                cur.execute(
-                    '''INSERT INTO Transfer_Record
-                       (transfer_id, player_id, from_club_id, to_club_id,
-                        transfer_date, transfer_fee, transfer_type)
-                       VALUES (%s, %s, %s, %s, CURDATE(), %s, %s)''',
-                    (tid, player_id,
-                     from_club_id if from_club_id else dest_club_id,
-                     dest_club_id, fee_val, transfer_type)
-                )
+                # Create transfer record only if player has a source club (i.e. this is a transfer, not a first registration)
+                if from_club_id:
+                    cur.execute('SELECT COALESCE(MAX(transfer_id), 0) + 1 AS nid FROM Transfer_Record')
+                    tid = cur.fetchone()['nid']
+
+                    cur.execute(
+                        '''INSERT INTO Transfer_Record
+                           (transfer_id, player_id, from_club_id, to_club_id,
+                            transfer_date, transfer_fee, transfer_type)
+                           VALUES (%s, %s, %s, %s, CURDATE(), %s, %s)''',
+                        (tid, player_id, from_club_id, dest_club_id, fee_val, transfer_type)
+                    )
 
             conn.commit()
             flash('Transfer and contract registered successfully!', 'success')

@@ -57,8 +57,12 @@
       </div>
       <div class="form-group">
         <label for="main_position">Main Position</label>
-        <input type="text" id="main_position" name="main_position"
-               value="{{ form.get('main_position','') }}">
+        <select id="main_position" name="main_position">
+          <option value="Goalkeeper" {{ 'selected' if form.get('main_position')=='Goalkeeper' }}>Goalkeeper</option>
+          <option value="Defender" {{ 'selected' if form.get('main_position')=='Defender' }}>Defender</option>
+          <option value="Midfielder" {{ 'selected' if form.get('main_position')=='Midfielder' }}>Midfielder</option>
+          <option value="Forward" {{ 'selected' if form.get('main_position')=='Forward' }}>Forward</option>
+        </select>
       </div>
       <div class="form-group">
         <label for="strong_foot">Strong Foot</label>

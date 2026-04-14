@@ -292,7 +292,7 @@ BEGIN
     FROM Contract
     WHERE player_id = NEW.player_id
       AND start_date <= NEW.start_date
-      AND end_date   >= NEW.start_date;
+      AND end_date   > NEW.start_date;
 
     IF active_count >= 2 THEN
         SIGNAL SQLSTATE '45000'
@@ -331,7 +331,7 @@ BEGIN
     JOIN Permanent_Contract pc ON pc.contract_id = c.contract_id
     WHERE c.player_id = new_player
       AND c.start_date <= new_start
-      AND c.end_date   >= new_start;
+      AND c.end_date   > new_start;
 
     IF perm_count > 0 THEN
         SIGNAL SQLSTATE '45000'
@@ -374,7 +374,7 @@ BEGIN
     JOIN Loan_Contract lc ON lc.contract_id = c.contract_id
     WHERE c.player_id = new_player
       AND c.start_date <= new_start
-      AND c.end_date   >= new_start;
+      AND c.end_date   > new_start;
 
     IF loan_count > 0 THEN
         SIGNAL SQLSTATE '45000'
@@ -388,7 +388,7 @@ BEGIN
     WHERE c.player_id = new_player
       AND c.club_id != contract_club
       AND c.start_date <= new_start
-      AND c.end_date   >= new_start;
+      AND c.end_date   > new_start;
 
     IF perm_count = 0 THEN
         SIGNAL SQLSTATE '45000'
