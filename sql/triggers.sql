@@ -89,20 +89,17 @@ END//
 -- MATCH — BEFORE UPDATE
 --   1. Attendance must not exceed stadium capacity
 --   2. Results only after match time has passed
---   3. Each club must have >= 11 players in squad
 -- ================================================================
 CREATE TRIGGER trg_match_before_update
 BEFORE UPDATE ON `Match`
 FOR EACH ROW
 BEGIN
     DECLARE cap INT DEFAULT 0;
-    DECLARE home_squad INT DEFAULT 0;
-    DECLARE away_squad INT DEFAULT 0;
 
     -- 0. Only the assigned referee can submit results
     IF (NEW.home_goals IS NOT NULL OR NEW.away_goals IS NOT NULL OR NEW.attendance IS NOT NULL)
        AND (OLD.home_goals IS NULL AND OLD.away_goals IS NULL AND OLD.attendance IS NULL) THEN
-        IF @app_person_id IS NOT NULL AND OLD.referee_id != @app_person_id THEN
+        IF @app_person_id IS NULL OR OLD.referee_id != @app_person_id THEN
             SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'Only the assigned referee can submit match results.';
         END IF;
@@ -120,34 +117,13 @@ BEGIN
         END IF;
     END IF;
 
-    -- The rest only fires when results are being submitted for the first time
+    -- 2. Match must be in the past before results can be submitted
     IF (NEW.home_goals IS NOT NULL OR NEW.away_goals IS NOT NULL OR NEW.attendance IS NOT NULL)
        AND (OLD.home_goals IS NULL AND OLD.away_goals IS NULL AND OLD.attendance IS NULL) THEN
 
-        -- 2. Match must be in the past
         IF NEW.match_datetime > NOW() THEN
             SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'Cannot submit match results before the match has been played.';
-        END IF;
-
-        -- 3a. Home club >= 11 players
-        SELECT COUNT(*) INTO home_squad
-        FROM Match_Participation
-        WHERE match_id = NEW.match_id AND club_id = NEW.home_club_id;
-
-        IF home_squad < 11 THEN
-            SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'Home club must have at least 11 players in the squad before submitting results.';
-        END IF;
-
-        -- 3b. Away club >= 11 players
-        SELECT COUNT(*) INTO away_squad
-        FROM Match_Participation
-        WHERE match_id = NEW.match_id AND club_id = NEW.away_club_id;
-
-        IF away_squad < 11 THEN
-            SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'Away club must have at least 11 players in the squad before submitting results.';
         END IF;
     END IF;
 END//
