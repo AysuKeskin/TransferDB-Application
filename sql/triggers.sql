@@ -335,14 +335,13 @@ END//
 -- ================================================================
 -- PERMANENT_CONTRACT — BEFORE INSERT
 --   1. Contract cannot also be a Loan Contract (ISA disjointness)
---   2. No two simultaneous permanent contracts
+--   2. Auto-terminate any existing active permanent contract
 -- ================================================================
 CREATE TRIGGER trg_permanent_contract_before_insert
 BEFORE INSERT ON Permanent_Contract
 FOR EACH ROW
 BEGIN
     DECLARE cnt INT DEFAULT 0;
-    DECLARE perm_count INT DEFAULT 0;
     DECLARE new_player INT;
     DECLARE new_start  DATE;
 
@@ -354,21 +353,17 @@ BEGIN
             SET MESSAGE_TEXT = 'This contract is already a Loan Contract and cannot also be a Permanent Contract.';
     END IF;
 
-    -- 2. No duplicate active permanent
+    -- 2. Auto-terminate any existing active permanent contract
     SELECT player_id, start_date INTO new_player, new_start
     FROM Contract WHERE contract_id = NEW.contract_id;
 
-    SELECT COUNT(*) INTO perm_count
-    FROM Contract c
+    UPDATE Contract c
     JOIN Permanent_Contract pc ON pc.contract_id = c.contract_id
-    WHERE c.player_id = new_player
+    SET c.end_date = new_start
+    WHERE c.player_id  = new_player
       AND c.start_date <= new_start
-      AND c.end_date   > new_start;
-
-    IF perm_count > 0 THEN
-        SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Player already has an active permanent contract. Terminate it before creating a new one.';
-    END IF;
+      AND c.end_date   > new_start
+      AND c.contract_id != NEW.contract_id;
 END//
 
 -- ================================================================
