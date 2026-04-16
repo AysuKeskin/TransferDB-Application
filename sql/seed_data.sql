@@ -480,3 +480,38 @@ INSERT INTO `Match` (match_id, competition_id, home_club_id, away_club_id, stadi
 VALUES (9, 2, 3, 2, 3, '2026-05-17 21:00:00', 7);
 INSERT INTO `Match` (match_id, competition_id, home_club_id, away_club_id, stadium_id, match_datetime, referee_id)
 VALUES (10, 1, 2, 1, 2, '2026-06-01 16:00:00', 5);
+
+
+INSERT INTO `Match` (match_id, competition_id, home_club_id, away_club_id, stadium_id, match_datetime, referee_id)
+VALUES (11, 1, 1, 4, 1, '2026-04-10 20:00:00', 5);
+
+-- ============================================================
+-- PAST MATCH AWAITING RESULT SUBMISSION (squads submitted, no result yet)
+-- ============================================================
+
+-- Match 11: Royal Madrid (club 1) vs Atletico Madrid (club 4)
+-- Royal Madrid starters
+INSERT INTO Match_Participation VALUES (11, 8,  1, 1, 0, 'Goalkeeper', 0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 9,  1, 1, 0, 'Defender',   0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 10, 1, 1, 0, 'Defender',   0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 11, 1, 1, 0, 'Defender',   0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 12, 1, 1, 0, 'Defender',   0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 13, 1, 1, 0, 'Midfielder', 0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 14, 1, 1, 0, 'Midfielder', 0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 15, 1, 1, 0, 'Midfielder', 0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 16, 1, 1, 0, 'Forward',    0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 17, 1, 1, 0, 'Forward',    0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 18, 1, 1, 0, 'Forward',    0, 0, 0, 0, 5.0);
+
+-- Atletico Madrid starters
+INSERT INTO Match_Participation VALUES (11, 44, 4, 1, 0, 'Goalkeeper', 0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 45, 4, 1, 0, 'Defender',   0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 46, 4, 1, 0, 'Defender',   0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 47, 4, 1, 0, 'Defender',   0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 48, 4, 1, 0, 'Defender',   0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 49, 4, 1, 0, 'Midfielder', 0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 50, 4, 1, 0, 'Midfielder', 0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 51, 4, 1, 0, 'Midfielder', 0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 52, 4, 1, 0, 'Forward',    0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 53, 4, 1, 0, 'Forward',    0, 0, 0, 0, 5.0);
+INSERT INTO Match_Participation VALUES (11, 54, 4, 1, 0, 'Forward',    0, 0, 0, 0, 5.0);
