@@ -182,6 +182,8 @@ INSERT INTO Contract VALUES (6,  13, 1, '2025-07-01', '2027-06-30', 250000);
 INSERT INTO Contract VALUES (7,  14, 1, '2025-07-01', '2027-06-30', 220000);
 INSERT INTO Contract VALUES (8,  15, 1, '2025-07-01', '2027-06-30', 160000);
 INSERT INTO Contract VALUES (9,  16, 1, '2025-07-01', '2027-06-30', 350000);
+-- Vinicius old contract at Liverpool Reds (expired)
+INSERT INTO Contract VALUES (50, 16, 3, '2021-07-01', '2025-06-30', 95000);
 INSERT INTO Contract VALUES (10, 17, 1, '2025-07-01', '2027-06-30', 200000);
 INSERT INTO Contract VALUES (11, 18, 1, '2025-07-01', '2027-06-30', 300000);
 INSERT INTO Contract VALUES (12, 19, 1, '2025-07-01', '2027-06-30', 120000);
@@ -277,6 +279,7 @@ INSERT INTO Permanent_Contract VALUES (45);
 INSERT INTO Permanent_Contract VALUES (46);
 INSERT INTO Permanent_Contract VALUES (47);
 INSERT INTO Permanent_Contract VALUES (48);
+INSERT INTO Permanent_Contract VALUES (50); -- Vinicius old Liverpool Reds contract
 
 -- ============================================================
 -- LOAN example: Julian Alvarez (31) loaned from Club 2 to Club 4
@@ -290,23 +293,25 @@ INSERT INTO Loan_Contract VALUES (49, 24);  -- references his permanent contract
 INSERT INTO Transfer_Record VALUES (1, 30, 4, 2, '2025-07-01', 75000000, 'Purchase');
 INSERT INTO Transfer_Record VALUES (2, 42, 2, 3, '2025-07-15', 68000000, 'Purchase');
 INSERT INTO Transfer_Record VALUES (3, 31, 2, 4, '2025-09-01', 5000000,  'Loan');
+-- Vinicius: Liverpool Reds → Royal Madrid, summer 2025
+INSERT INTO Transfer_Record VALUES (4, 16, 3, 1, '2025-07-01', 180000000, 'Purchase');
 
 -- ============================================================
 -- COMPLETED MATCHES (past dates, with results)
 -- ============================================================
 
 -- Match 1: Royal Madrid vs Manchester Blues (Premier League)
-INSERT INTO `Match` VALUES (1, 1, 1, 2, 1, '2025-09-15 16:00:00', 75000, 2, 1, 5, 'Completed');
+INSERT INTO `Match` VALUES (1, 1, 1, 2, 1, '2025-09-15 16:00:00', 75000, 2, 1, 5);
 -- Match 2: Liverpool Reds vs Atletico Madrid (Premier League)
-INSERT INTO `Match` VALUES (2, 1, 3, 4, 3, '2025-09-15 20:00:00', 55000, 3, 0, 6, 'Completed');
+INSERT INTO `Match` VALUES (2, 1, 3, 4, 3, '2025-09-15 20:00:00', 55000, 3, 0, 6);
 -- Match 3: Manchester Blues vs Liverpool Reds (Premier League)
-INSERT INTO `Match` VALUES (3, 1, 2, 3, 2, '2025-10-05 17:30:00', 52000, 1, 1, 7, 'Completed');
+INSERT INTO `Match` VALUES (3, 1, 2, 3, 2, '2025-10-05 17:30:00', 52000, 1, 1, 7);
 -- Match 4: Atletico Madrid vs Royal Madrid (Premier League)
-INSERT INTO `Match` VALUES (4, 1, 4, 1, 4, '2025-10-20 21:00:00', 63000, 0, 3, 5, 'Completed');
+INSERT INTO `Match` VALUES (4, 1, 4, 1, 4, '2025-10-20 21:00:00', 63000, 0, 3, 5);
 -- Match 5: Royal Madrid vs Liverpool Reds (Champions League)
-INSERT INTO `Match` VALUES (5, 2, 1, 3, 1, '2025-11-05 21:00:00', 78000, 2, 2, 6, 'Completed');
+INSERT INTO `Match` VALUES (5, 2, 1, 3, 1, '2025-11-05 21:00:00', 78000, 2, 2, 6);
 -- Match 6: Manchester Blues vs Atletico Madrid (Champions League)
-INSERT INTO `Match` VALUES (6, 2, 2, 4, 2, '2025-11-05 21:00:00', 50000, 4, 1, 7, 'Completed');
+INSERT INTO `Match` VALUES (6, 2, 2, 4, 2, '2025-11-05 21:00:00', 50000, 4, 1, 7);
 
 -- ============================================================
 -- MATCH PARTICIPATIONS (11 starters per club, completed matches)
