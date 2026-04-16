@@ -463,26 +463,45 @@ class TestOp9Transfer:
         msg = str(exc_info.value).lower()
         assert 'loan' in msg or 'maximum' in msg or '45000' in str(exc_info.value)
 
-    def test_duplicate_permanent_rejected(self, db):
+    def test_duplicate_permanent_auto_terminates_old(self, db):
         """
         trg_permanent_contract_before_insert: inserting a second active permanent
-        contract without terminating the first must be rejected.
+        contract automatically terminates the previous one (sets its end_date to
+        the new contract's start_date) rather than rejecting the insert.
+        This matches the application's transfer logic.
         """
-        _create_player(db, 9901, club_id=1)
-        with pytest.raises(pymysql.Error) as exc_info:
-            with db.cursor() as cur:
-                cid = _next_contract_id(cur)
-                cur.execute(
-                    "INSERT INTO Contract "
-                    "(contract_id, player_id, club_id, start_date, end_date, weekly_wage) "
-                    "VALUES (%s, 9901, 2, CURDATE(), '2028-06-30', 100000)", (cid,)
-                )
-                cur.execute(
-                    "INSERT INTO Permanent_Contract (contract_id) VALUES (%s)", (cid,)
-                )
-            db.commit()
-        db.rollback()
-        assert 'permanent' in str(exc_info.value).lower() or '45000' in str(exc_info.value)
+        old_cid = _create_player(db, 9901, club_id=1)
+
+        with db.cursor() as cur:
+            cid = _next_contract_id(cur)
+            cur.execute(
+                "INSERT INTO Contract "
+                "(contract_id, player_id, club_id, start_date, end_date, weekly_wage) "
+                "VALUES (%s, 9901, 2, CURDATE(), '2028-06-30', 100000)", (cid,)
+            )
+            cur.execute(
+                "INSERT INTO Permanent_Contract (contract_id) VALUES (%s)", (cid,)
+            )
+        db.commit()
+
+        # Old permanent contract must now be terminated (end_date = new start_date = CURDATE)
+        with db.cursor() as cur:
+            cur.execute("SELECT end_date FROM Contract WHERE contract_id = %s", (old_cid,))
+            old_end = cur.fetchone()['end_date']
+            cur.execute("SELECT CURDATE() AS today")
+            today = cur.fetchone()['today']
+
+        assert old_end == today, "Old permanent contract must be auto-terminated on new permanent insert"
+
+        # Only one active permanent contract should remain
+        with db.cursor() as cur:
+            cur.execute(
+                "SELECT COUNT(*) AS cnt FROM Contract c "
+                "JOIN Permanent_Contract pc ON pc.contract_id = c.contract_id "
+                "WHERE c.player_id = 9901 AND c.start_date <= CURDATE() AND c.end_date > CURDATE()"
+            )
+            cnt = cur.fetchone()['cnt']
+        assert cnt == 1, "Exactly one active permanent contract must exist after auto-termination"
 
     def test_third_contract_rejected_by_max_limit(self, db):
         """

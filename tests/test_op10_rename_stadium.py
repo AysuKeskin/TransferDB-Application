@@ -147,7 +147,7 @@ class TestOp10RenameStadium:
                 "INSERT INTO `Match` "
                 "(match_id, competition_id, home_club_id, away_club_id, "
                 " stadium_id, match_datetime, referee_id) "
-                "VALUES (%s, 1, 1, 2, %s, '2030-08-01 20:00:00', 1)",
+                "VALUES (%s, 1, 1, 2, %s, '2030-08-01 20:00:00', 5)",
                 (match_id, T_STADIUM_ID),
             )
         db.commit()
