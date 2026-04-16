@@ -156,6 +156,7 @@ BEGIN
     DECLARE prev_match_id INT DEFAULT NULL;
     DECLARE prev_red INT DEFAULT 0;
     DECLARE yellow_total INT DEFAULT 0;
+    DECLARE threshold INT DEFAULT 0;
     DECLARE trigger_datetime DATETIME DEFAULT NULL;
     DECLARE suspension_datetime DATETIME DEFAULT NULL;
     DECLARE yellows_in_window INT DEFAULT 0;
@@ -285,44 +286,41 @@ BEGIN
     SELECT match_datetime INTO current_match_dt
     FROM `Match` WHERE match_id = NEW.match_id;
 
-    -- Find last match where running yellow sum hit a multiple of 5 (> 0)
-    SELECT match_dt INTO trigger_datetime
-    FROM (
-        SELECT m.match_datetime AS match_dt,
-               (SELECT COALESCE(SUM(mp2.yellow_cards), 0)
-                FROM Match_Participation mp2
-                JOIN `Match` m2 ON m2.match_id = mp2.match_id
-                WHERE mp2.player_id = NEW.player_id
-                  AND m2.competition_id = comp_id
-                  AND m2.home_goals IS NOT NULL
-                  AND m2.match_datetime <= m.match_datetime) AS running_sum
-        FROM Match_Participation mp
-        JOIN `Match` m ON m.match_id = mp.match_id
-        WHERE mp.player_id = NEW.player_id
-          AND m.competition_id = comp_id
-          AND m.home_goals IS NOT NULL
-          AND m.match_datetime < current_match_dt
-    ) AS rs
-    WHERE running_sum > 0 AND MOD(running_sum, 5) = 0
-    ORDER BY match_dt DESC
-    LIMIT 1;
+    -- Total yellows before this match
+    SELECT COALESCE(SUM(mp.yellow_cards), 0) INTO yellow_total
+    FROM Match_Participation mp
+    JOIN `Match` m ON m.match_id = mp.match_id
+    WHERE mp.player_id    = NEW.player_id
+      AND m.competition_id = comp_id
+      AND m.home_goals    IS NOT NULL
+      AND m.match_datetime < current_match_dt;
 
-    IF trigger_datetime IS NULL THEN
-        -- No cycle completed yet: simple check
-        SELECT COALESCE(SUM(mp.yellow_cards), 0) INTO yellows_in_window
-        FROM Match_Participation mp
-        JOIN `Match` m ON m.match_id = mp.match_id
-        WHERE mp.player_id = NEW.player_id
-          AND m.competition_id = comp_id
-          AND m.match_datetime < current_match_dt
-          AND m.home_goals IS NOT NULL;
+    SET threshold = FLOOR(yellow_total / 5) * 5;
 
-        IF yellows_in_window >= 5 THEN
-            SIGNAL SQLSTATE '45000'
-                SET MESSAGE_TEXT = 'Player is suspended: accumulated 5 yellow cards in this competition.';
-        END IF;
-    ELSE
-        -- Find suspension match: first club match after trigger that has been played
+    IF threshold > 0 THEN
+        -- Find trigger match: first match where running sum first reached >= threshold
+        SELECT match_dt INTO trigger_datetime
+        FROM (
+            SELECT m.match_datetime AS match_dt,
+                   (SELECT COALESCE(SUM(mp2.yellow_cards), 0)
+                    FROM Match_Participation mp2
+                    JOIN `Match` m2 ON m2.match_id = mp2.match_id
+                    WHERE mp2.player_id = NEW.player_id
+                      AND m2.competition_id = comp_id
+                      AND m2.home_goals IS NOT NULL
+                      AND m2.match_datetime <= m.match_datetime) AS running_sum
+            FROM Match_Participation mp
+            JOIN `Match` m ON m.match_id = mp.match_id
+            WHERE mp.player_id    = NEW.player_id
+              AND m.competition_id = comp_id
+              AND m.home_goals    IS NOT NULL
+              AND m.match_datetime < current_match_dt
+        ) AS rs
+        WHERE running_sum >= threshold
+        ORDER BY match_dt ASC
+        LIMIT 1;
+
+        -- Find suspension match: first completed club match after trigger
         SELECT m.match_datetime INTO suspension_datetime
         FROM `Match` m
         WHERE m.competition_id = comp_id
@@ -334,7 +332,7 @@ BEGIN
         LIMIT 1;
 
         IF suspension_datetime IS NULL THEN
-            -- No club match played between trigger and now: current match is the suspension match
+            -- Current match is the suspension match
             SIGNAL SQLSTATE '45000'
                 SET MESSAGE_TEXT = 'Player is suspended: accumulated 5 yellow cards in this competition.';
         ELSE
@@ -342,11 +340,11 @@ BEGIN
             SELECT COALESCE(SUM(mp.yellow_cards), 0) INTO yellows_in_window
             FROM Match_Participation mp
             JOIN `Match` m ON m.match_id = mp.match_id
-            WHERE mp.player_id = NEW.player_id
+            WHERE mp.player_id    = NEW.player_id
               AND m.competition_id = comp_id
               AND m.match_datetime > suspension_datetime
               AND m.match_datetime < current_match_dt
-              AND m.home_goals IS NOT NULL;
+              AND m.home_goals    IS NOT NULL;
 
             IF yellows_in_window >= 5 THEN
                 SIGNAL SQLSTATE '45000'
