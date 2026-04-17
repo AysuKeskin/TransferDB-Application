@@ -1,10 +1,9 @@
 """
-Seed user accounts into the User table.
+Seed user accounts into the User table from initial_data.xlsx.
 Run AFTER schema.sql and seed_data.sql:
     python3 seed_users.py
 """
 import os
-
 import pymysql
 from werkzeug.security import generate_password_hash
 
@@ -16,7 +15,6 @@ DB_CONFIG = {
     'charset': 'utf8mb4',
 }
 
-# DB Manager accounts (from initial data spreadsheet)
 DB_MANAGERS = [
     ('admin',   'admin'),
     ('kevin',   'K3v!n#2024'),
@@ -29,31 +27,48 @@ DB_MANAGERS = [
     ('maria',   'M@r1a321'),
 ]
 
-# Manager accounts (person_id -> username, password)
 MANAGERS = [
-    (1, 'ancelotti', 'Carlo!Mgr1'),
-    (2, 'guardiola', 'Pep@Coach2'),
-    (3, 'klopp',     'Jurgen#K03'),
-    (4, 'simeone',   'Diego$Sim4'),
+    (2001, 'fatih_terim',    'hash_M@nager1'),
+    (2002, 'jorge_jesus',    'hash_M@nager2'),
+    (2003, 'ismail_kartal',  'hash_M3'),
+    (2004, 'pep_guardiola',  'hash_M4'),
+    (2005, 'jurgen_klopp',   'hash_M5'),
+    (2006, 'sergen_yalcin',  'hash_M6'),
+    (2007, 'okan_buruk',     'hash_M7'),
+    (2008, 'jose_mourinho',  'hash_M8'),
+    (2009, 'volkan_demirel', 'hash_M9'),
+    (2010, 'clubs_coach',    'coach123'),
 ]
 
-# Referee accounts
 REFEREES = [
-    (5, 'oliver',  'Mike!Ref55'),
-    (6, 'brych',   'Felix@Ref6'),
-    (7, 'cakir',   'Cuneyt#R77'),
+    (1001, 'cuneyt_cakir',       'hash_R3feree!'),
+    (1002, 'halil_meler',        'hash_R3feree2'),
+    (1003, 'michael_oliver',     'hash_Ref03'),
+    (1004, 'anthony_taylor',     'hash_Ref04'),
+    (1005, 'szymon_marciniak',   'hash_Ref05'),
+    (1006, 'stephanie_frappart', 'hash_Ref06'),
+    (1007, 'ali_palabiyik',      'hash_Ref07'),
 ]
 
-# Player accounts (a few key players)
 PLAYERS = [
-    (16, 'vinicius',  'Vini!Jr016'),
-    (30, 'haaland',   'Erling@H30'),
-    (40, 'salah',     'Mo$Salah40'),
-    (52, 'griezmann', 'Antoine#52'),
-    (13, 'modric',    'Luka!Mod13'),
-    (26, 'debruyne',  'Kevin@DB26'),
-    (34, 'vandijk',   'Virgil#V34'),
-    (54, 'morata',    'Alvaro$M54'),
+    (1,  'burak_yilmaz',     'hash_Str0ng!1'),
+    (2,  'arda_guler',       'hash_Str0ng!2'),
+    (3,  'gedson_fernandes', 'hash_Str0ng!3'),
+    (4,  'fernando_muslera', 'hash_Str0ng!4'),
+    (5,  'altay_bayindir',   'hash_1'),
+    (6,  'ferdi_kadioglu',   'hash_2'),
+    (7,  'caglar_soyuncu',   'hash_3'),
+    (8,  'ozan_kabak',       'hash_4'),
+    (9,  'salih_ozcan',      'hash_5'),
+    (10, 'hakan_calhanoglu', 'hash_6'),
+    (11, 'orkun_kokcu',      'hash_7'),
+    (12, 'kerem_akturkoglu', 'hash_8'),
+    (13, 'baris_yilmaz',     'hash_9'),
+    (14, 'enes_unal',        'hash_10'),
+    (15, 'cengiz_under',     'hash_11'),
+    (16, 'arzgr222',         'arzgr222'),
+    (17, 'berkgkts',         'berkgkts'),
+    (18, 'b_ayd23',          'b_ayd23'),
 ]
 
 
@@ -62,7 +77,7 @@ def main():
     try:
         with conn.cursor() as cur:
             for username, password in DB_MANAGERS:
-                pw_hash = generate_password_hash(password)
+                pw_hash = generate_password_hash(str(password))
                 cur.execute(
                     "INSERT INTO User (username, password_hash, role, person_id) "
                     "VALUES (%s, %s, 'db_manager', NULL)",
@@ -71,7 +86,7 @@ def main():
                 print(f'  [db_manager] {username}')
 
             for person_id, username, password in MANAGERS:
-                pw_hash = generate_password_hash(password)
+                pw_hash = generate_password_hash(str(password))
                 cur.execute(
                     "INSERT INTO User (username, password_hash, role, person_id) "
                     "VALUES (%s, %s, 'manager', %s)",
@@ -80,7 +95,7 @@ def main():
                 print(f'  [manager]    {username} (person_id={person_id})')
 
             for person_id, username, password in REFEREES:
-                pw_hash = generate_password_hash(password)
+                pw_hash = generate_password_hash(str(password))
                 cur.execute(
                     "INSERT INTO User (username, password_hash, role, person_id) "
                     "VALUES (%s, %s, 'referee', %s)",
@@ -89,7 +104,7 @@ def main():
                 print(f'  [referee]    {username} (person_id={person_id})')
 
             for person_id, username, password in PLAYERS:
-                pw_hash = generate_password_hash(password)
+                pw_hash = generate_password_hash(str(password))
                 cur.execute(
                     "INSERT INTO User (username, password_hash, role, person_id) "
                     "VALUES (%s, %s, 'player', %s)",

@@ -82,7 +82,7 @@ CREATE TABLE Club (
     club_id INT,
     club_name VARCHAR(100) NOT NULL UNIQUE,
     foundation_year INT NOT NULL,
-    stadium_id INT NOT NULL,
+    stadium_id INT NULL,
     manager_id INT UNIQUE,
     PRIMARY KEY (club_id),
     FOREIGN KEY (stadium_id) REFERENCES Stadium(stadium_id)
@@ -177,7 +177,7 @@ CREATE TABLE Permanent_Contract (
 -- -------------------------------------------------------
 CREATE TABLE Loan_Contract (
     contract_id INT,
-    permanent_contract_id INT NOT NULL,
+    permanent_contract_id INT NULL,
     PRIMARY KEY (contract_id),
     FOREIGN KEY (contract_id)
         REFERENCES Contract(contract_id)
@@ -193,7 +193,7 @@ CREATE TABLE Loan_Contract (
 CREATE TABLE Transfer_Record (
     transfer_id INT,
     player_id INT NOT NULL,
-    from_club_id INT NOT NULL,
+    from_club_id INT NULL,
     to_club_id INT NOT NULL,
     transfer_date DATE NOT NULL,
     transfer_fee DECIMAL(15,2) NOT NULL,

@@ -42,7 +42,7 @@ else
 	mysql "${MYSQL_AUTH[@]}" < sql/schema.sql
 
 	echo "[5/6] Seeding base data..."
-	perl -pe "s/, 'Completed'\\);/\\);/g" sql/seed_data.sql | mysql "${MYSQL_AUTH[@]}" "$DB_NAME"
+	mysql "${MYSQL_AUTH[@]}" "$DB_NAME" < sql/seed_data_xlsx.sql
 
 	echo "[6/6] Creating triggers and seeding app users..."
 	mysql "${MYSQL_AUTH[@]}" "$DB_NAME" < sql/triggers.sql
